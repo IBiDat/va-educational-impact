@@ -1,0 +1,1 @@
+# Script ejecutable para la tarea extract_interactions_data
