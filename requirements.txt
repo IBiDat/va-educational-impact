@@ -1,1 +1,6 @@
+gspread
+pandas
+oauth2client
+os
+sys
 pymongo
