@@ -23,7 +23,7 @@ project_path = os.path.join(script_path, '..', '..', '..')
 sys.path.append(project_path)
 
 # Data directories
-interactions_raw_data_dir = os.path.join(project_path, 'data', 'interactions', 'raw')
+interactions_raw_data_dir = os.path.join(project_path, 'data', 'interactions', 'raw_data')
 
 # Output Files
 # Ensure output directory exists
