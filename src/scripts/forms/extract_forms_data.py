@@ -1,46 +1,35 @@
-import gspread
-import pandas as pd
-from oauth2client.service_account import ServiceAccountCredentials
 import os
+import sys
 
-# 1. Configuración de rutas
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-path_to_json = os.path.join(BASE_DIR, 'credentials.json')
+script_path = os.path.dirname(os.path.abspath(__file__))
+project_path = os.path.join(script_path, '..', '..','..')
+sys.path.append(project_path)
+from src.utils.forms.forms_data_extraction import get_gspread_client, get_forms_data
 
-# 2. Definición de permisos (Scope)
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# Configuración de rutas locales
+DATA_DIR = os.path.join(project_path, 'data')
+PATH_JSON = os.path.join(DATA_DIR, 'credentials.json')
+FORMS_DIR = os.path.join(project_path, 'data', 'forms')
 
-# 3. Autenticación
-try:
-    creds = ServiceAccountCredentials.from_json_keyfile_name(path_to_json, scope)
-    client = gspread.authorize(creds)
-    print("✓ Autenticación exitosa.")
-except Exception as e:
-    print(f"× Error en credenciales: {e}")
-    exit()
+# Crear carpeta de datos si no existe
+if not os.path.exists(FORMS_DIR):
+    os.makedirs(FORMS_DIR)
 
-# 4. Función de descarga individual
-def download_data(nombre_hoja, nombre_archivo_csv):
-    try:
-        # Abrir la hoja de cálculo
-        spreadsheet = client.open(nombre_hoja)
-        sheet = spreadsheet.get_worksheet(0)
+def run_extraction():
+    # 1. Obtener cliente
+    client = get_gspread_client(PATH_JSON)
+    
+    if client:
+        # 2. Definir descargas
+        formularios = {
+            "Cuestionario Previo (respuestas)": "respuestas_pre.csv",
+            "Cuestionario Post (respuestas)": "respuestas_post.csv"
+        }
         
-        # Convertir a DataFrame
-        data = sheet.get_all_records()
-        df = pd.DataFrame(data)
-        
-        # Guardar localmente
-        ruta_guardado = os.path.join(BASE_DIR, nombre_archivo_csv)
-        df.to_csv(ruta_guardado, index=False)
-        
-        print(f"✓ Hoja '{nombre_hoja}' guardada correctamente en: {nombre_archivo_csv}")
-        return df
-    except gspread.exceptions.SpreadsheetNotFound:
-        print(f"× Error: No se encontró la hoja '{nombre_hoja}'")
-    except Exception as e:
-        print(f"× Error inesperado con '{nombre_hoja}': {e}")
+        # 3. Ejecutar descargas en bucle
+        for nombre_hoja, nombre_csv in formularios.items():
+            ruta_csv = os.path.join(FORMS_DIR, nombre_csv)
+            get_forms_data(client, nombre_hoja, ruta_csv)
 
-# 5. Ejecución de las descargas (Por separado)
-df_pre = download_data("Cuestionario Previo (respuestas)", "respuestas_pre.csv")
-df_post = download_data("Cuestionario Post (respuestas)", "respuestas_post.csv")
+if __name__ == "__main__":
+    run_extraction()
