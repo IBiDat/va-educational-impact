@@ -1,7 +1,10 @@
+###########################################################################################
+
 import gspread
 import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
-import os
+
+###########################################################################################
 
 def get_gspread_client(path_to_json):
     """Establece la conexión con Google Sheets."""
@@ -32,3 +35,5 @@ def get_forms_data(client, nombre_hoja, ruta_salida):
     except Exception as e:
         print(f"× Error inesperado: {e}")
     return None
+
+###########################################################################################

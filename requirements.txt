@@ -3,3 +3,4 @@ pandas
 oauth2client
 pymongo
 datetime
+polars
