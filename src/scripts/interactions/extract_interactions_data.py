@@ -1,4 +1,6 @@
 ###########################################################################################
+# To run this script successfully the VA Dockers have to be deployed
+###########################################################################################
 
 # --- IMPORTS ---
 
@@ -21,12 +23,12 @@ project_path = os.path.join(script_path, '..', '..', '..')
 sys.path.append(project_path)
 
 # Data directories
-interactions_data_dir = os.path.join(project_path, 'data', 'interactions')
+interactions_raw_data_dir = os.path.join(project_path, 'data', 'interactions', 'raw')
 
 # Output Files
 # Ensure output directory exists
-os.makedirs(interactions_data_dir, exist_ok=True)
-output_file_path = os.path.join(interactions_data_dir, 'interactions_raw_data.json')
+os.makedirs(interactions_raw_data_dir, exist_ok=True)
+output_file_path = os.path.join(interactions_raw_data_dir, 'interactions_raw_data.json')
 
 # Database Configuration
 MONGO_URI = "mongodb://localhost:27017"
