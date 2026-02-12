@@ -5,6 +5,7 @@
 # --- IMPORTS ---
 
 import os, sys, json, logging
+from datetime import datetime
 from pymongo import MongoClient
 
 ###########################################################################################
@@ -28,7 +29,8 @@ interactions_raw_data_dir = os.path.join(project_path, 'data', 'interactions', '
 # Output Files
 # Ensure output directory exists
 os.makedirs(interactions_raw_data_dir, exist_ok=True)
-output_file_path = os.path.join(interactions_raw_data_dir, 'interactions_raw_data.json')
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+output_file_path = os.path.join(interactions_raw_data_dir, f'interactions_raw_data_{timestamp}.json')
 
 # Database Configuration
 MONGO_URI = "mongodb://localhost:27017"
