@@ -4,3 +4,8 @@ oauth2client
 pymongo
 datetime
 polars
+matplotlib
+seaborn
+spicy
+statsmodels
+pyarrow
