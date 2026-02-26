@@ -7,3 +7,5 @@ polars
 matplotlib
 seaborn
 spicy
+statsmodels
+pyarrow
