@@ -1,5 +1,5 @@
 ###########################################################################################
-# To run this script successfully the VA Dockers have to be deployed
+# WARNING: To run this script successfully the VA Dockers have to be deployed
 ###########################################################################################
 
 # --- IMPORTS ---
