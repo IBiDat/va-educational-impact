@@ -9,3 +9,5 @@ seaborn
 spicy
 statsmodels
 pyarrow
+google-genai==1.52.0
+dotenv==0.9.9

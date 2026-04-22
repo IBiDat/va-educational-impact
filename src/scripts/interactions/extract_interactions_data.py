@@ -103,7 +103,8 @@ def main():
                 elif i_type == 'evaluation':
                     eval_entry = {
                         'evaluation_questions': interaction.get('evaluation_questions', ''),
-                        'user-answers': interaction.get('user_answers', '')
+                        'user-answers': interaction.get('user_answers', ''), 
+                        'pass': interaction['evaluation_result'].get('pass', '')
                     }
                     interactions_data[participant_hash]['evaluation_interactions'] = eval_entry
         
