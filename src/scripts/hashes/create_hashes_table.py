@@ -25,7 +25,7 @@ hashes_dir = os.path.join(project_path, 'data', 'hashes', 'raw_data')
 output_dir = os.path.join(project_path, 'data', 'hashes', 'processed_data')
 
 # Output File
-output_csv_path = os.path.join(output_dir, 'hashes_groups.csv')
+output_csv_path = os.path.join(output_dir, 'hashes_groups_old.csv')
 
 # Ensure output directory exists
 os.makedirs(output_dir, exist_ok=True)
