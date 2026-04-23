@@ -43,6 +43,10 @@ def process_interactions_data(raw_data):
     interactions_data = interactions_data.with_columns(
         consultive_chat_used = pl.col('chat_interactions_counts') > 0,
         evaluator_chat_used = pl.col('evaluation_answers_counts') > 0
+    ).with_columns(
+        pl.col("chat_interactions_counts")
+        .qcut(4, labels=["Low", "Lower_Intermediate", "Upper_Intermediate", "High"])
+        .alias("chat_freq_use")
     )
 
     return interactions_data
@@ -156,13 +160,13 @@ def categorize_wsdi(wsdi: float) -> str:
     if wsdi <= 0.5:
         return "Not_Relevant" # < 0.5
     elif wsdi < 1.5:
-        return "Superficial" # [0.5, 1.5)
+        return "Low" # [0.5, 1.5)
     elif wsdi < 2.:
-        return "Low_Intermediate" # [1.5, 2)
+        return "Lower_Intermediate" # [1.5, 2)
     elif wsdi < 2.5:
-        return "High_Intermediate" # [2, 2.5)
+        return "Upper_Intermediate" # [2, 2.5)
     else:
-        return "Deep" # >= 2.5
+        return "High" # >= 2.5
 
 #########################################################################################################################################################
 
@@ -204,4 +208,20 @@ def process_semantic_depth_data(semantic_depth_data):
 
     return semantic_depth_df, weighted_semantic_depth_df
 
+#########################################################################################################################################################
+
+def process_combined_interactions_data(interactions_df):
+
+    interactions_df = interactions_df.with_columns(
+            high_quality_use = pl.col('WSDI_cat').is_in([
+                #'Low_Intermediate',
+                'High_Intermediate', 
+                'Deep'
+            ]),
+        ).with_columns(
+            pl.col('high_quality_use').replace(None, False)
+        )
+    
+    return interactions_df
+    
 #########################################################################################################################################################
