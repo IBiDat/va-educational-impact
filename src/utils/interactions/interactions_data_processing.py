@@ -230,3 +230,47 @@ def process_combined_interactions_data(interactions_df):
     return interactions_df
     
 #########################################################################################################################################################
+
+import polars as pl
+
+def analizar_rendimiento_por_interaccion(df_parquet, df_interacciones):
+    """
+    Cruza los resultados de aprendizaje con las categorías de interacción del chatbot.
+    
+    Args:
+        df_parquet: DataFrame de Polars con los resultados cruzados (Pre/Post/Hake).
+        df_interacciones: DataFrame con las columnas ['id', 'WSDI_cat'].
+    """
+    
+    # 1. Aseguramos el cruce por ID para tener la categoría WSDI junto a las notas
+    # Seleccionamos solo las columnas necesarias de interacciones para no ensuciar
+    df_merged = df_parquet.join(
+        df_interacciones.select(["id", "WSDI_cat"]), 
+        on="id", 
+        how="left"
+    )
+
+    # 2. Definimos las métricas que queremos resumir
+    # Usamos las ganancias de Hake que ya tienes en tu Parquet
+    metricas = [
+        "puntuacion_tc_hake_gain",
+        "puntuacion_tc_retencion_hake_gain",
+        "puntuacion_tc_transferencia_hake_gain",
+        "puntuacion_tc_post",
+        "puntuacion_tcc_rel_post" # Carga cognitiva relevante (si quieres verla)
+    ]
+
+    # 3. Realizamos la agregación por categoría de WSDI
+    resumen = (
+        df_merged
+        .filter(pl.col("WSDI_cat").is_not_null()) # Quitamos alumnos sin interacción (Control)
+        .group_by("WSDI_cat")
+        .agg([
+            pl.count("id").alias("n_alumnos"),
+            *[pl.col(m).mean().round(3).alias(f"mean_{m}") for m in metricas],
+            *[pl.col(m).std().round(3).alias(f"std_{m}") for m in metricas]
+        ])
+        .sort("mean_puntuacion_tc_hake_gain", descending=True)
+    )
+
+    return resumen, df_merged
