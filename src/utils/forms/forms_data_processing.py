@@ -166,7 +166,6 @@ def process_forms_data(raw_data_dir):
 
     raw_data = {f: pl.read_csv(os.path.join(raw_data_dir, f)) for f in raw_data_filenames}
 
-    # TODO: eliminar cuando la función esté construida: 
     processed_data = {}
 
     for raw_filename, df_raw in raw_data.items():
@@ -218,6 +217,35 @@ def process_forms_data(raw_data_dir):
                 
         df = add_categorization(df)
 
+        processed_data[f'processed_{raw_filename}'.replace('.csv', '')] = df
+
     return processed_data
+
+#########################################################################################################################################################
+
+def add_hake_gains(df, metrics, max_score=1.0):
+    """
+    Calcula la Ganancia Normalizada de Hake para una lista de métricas cruzadas.
+    Espera que existan las columnas con sufijos '_pre' y '_post'.
+    """
+    hake_exprs = []
+    
+    for metric in metrics:
+        col_pre = f"{metric}_pre"
+        col_post = f"{metric}_post"
+        
+        # Expresión para cada métrica
+        expr = (
+            pl.when(pl.col(col_pre) == max_score)
+            .then(pl.lit(0.0))
+            .otherwise(
+                (pl.col(col_post) - pl.col(col_pre)) / (max_score - pl.col(col_pre))
+            )
+            .alias(f"{metric}_hake_gain") # ej: puntuacion_tc_hake_gain
+        )
+        hake_exprs.append(expr)
+        
+    # Polars ejecuta todas estas expresiones en paralelo
+    return df.with_columns(hake_exprs)
 
 #########################################################################################################################################################

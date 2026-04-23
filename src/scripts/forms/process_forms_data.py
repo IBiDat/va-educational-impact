@@ -30,7 +30,7 @@ hashes_dir = os.path.join(project_path, 'data', 'hashes', 'processed_data')
 
 # --- LOCAL IMPORTS ---
 
-from src.utils.forms.forms_data_processing import process_forms_data
+from src.utils.forms.forms_data_processing import process_forms_data, add_hake_gains
 
 ###########################################################################################
 
@@ -62,9 +62,9 @@ def main():
     logging.info("STEP 2: Processing forms data via util functions...\n")
 
     try:
-        processed_forms_data = process_forms_data(raw_data_dir=raw_data_dir, processed_data_dir=processed_data_dir)
-        df_pre = processed_forms_data['processed_respuestas_forms_pre.csv']
-        df_post = processed_forms_data['processed_respuestas_forms_post.csv']
+        processed_forms_data = process_forms_data(raw_data_dir=raw_data_dir)
+        df_pre = processed_forms_data['processed_respuestas_forms_pre']
+        df_post = processed_forms_data['processed_respuestas_forms_post']
         logging.info(f" -> Forms processed. Pre size: {df_pre.shape[0]}, Post size: {df_post.shape[0]}\n")
 
     except Exception as e:
@@ -123,8 +123,25 @@ def main():
         logging.error(f"Error during groups join: {e}")
         sys.exit(1)
 
-    # 6. Save Outputs
-    logging.info("STEP 6: Saving results to Parquet...\n")
+
+    # 6. Add Hake Gain
+    logging.info("STEP 6: Add Hake Gain Metric...\n")
+
+    try:
+        metrics_to_hake = [
+                    'puntuacion_tc', 
+                    'puntuacion_tc_retencion', 
+                    'puntuacion_tc_transferencia'
+                ]
+
+        df_cruzado = add_hake_gains(df_cruzado, metrics_to_hake, max_score=1.0)
+ 
+    except Exception as e:
+        logging.error(f"Error computing Hake Metric: {e}")
+        sys.exit(1)
+
+    # 7. Save Outputs
+    logging.info("STEP 7: Saving results to Parquet...\n")
 
     try:
         df_cruzado_filename = 'processed_pre_post_forms.parquet'

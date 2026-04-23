@@ -44,8 +44,13 @@ def process_interactions_data(raw_data):
         consultive_chat_used = pl.col('chat_interactions_counts') > 0,
         evaluator_chat_used = pl.col('evaluation_answers_counts') > 0
     ).with_columns(
-        pl.col("chat_interactions_counts")
-        .qcut(4, labels=["Low", "Lower_Intermediate", "Upper_Intermediate", "High"])
+        pl.when(pl.col("chat_interactions_counts") == 0)
+        .then(pl.lit("Not_Used"))
+        .otherwise(
+            pl.col("chat_interactions_counts")
+            .qcut(4, labels=["Low", "Lower_Intermediate", "Upper_Intermediate", "High"], allow_duplicates=True)
+            .cast(pl.Utf8)
+        )
         .alias("chat_freq_use")
     )
 
