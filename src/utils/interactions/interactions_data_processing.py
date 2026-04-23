@@ -220,8 +220,8 @@ def process_combined_interactions_data(interactions_df):
     interactions_df = interactions_df.with_columns(
             high_quality_use = pl.col('WSDI_cat').is_in([
                 #'Low_Intermediate',
-                'High_Intermediate', 
-                'Deep'
+                'Upper_Intermediate', 
+                'High'
             ]),
         ).with_columns(
             pl.col('high_quality_use').replace(None, False)
