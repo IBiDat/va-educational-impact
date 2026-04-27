@@ -71,26 +71,6 @@ def main():
         logging.error(f"Error during forms processing: {e}")
         sys.exit(1)
 
-    # 3. Clean and Fix Data
-    logging.info("STEP 3: Cleaning data and fixing manual errors...\n")
-
-    try:
-        # Fix typo in student ID
-        fix_expr = (
-            pl.when(pl.col("id") == "RamiroMaeztu-rya")
-            .then(pl.lit("RamiroMaeztu-kya"))
-            .otherwise(pl.col("id"))
-            .alias("id")
-        )
-        
-        df_pre = df_pre.with_columns(fix_expr)
-        df_post = df_post.with_columns(fix_expr)
-        logging.info(" -> ID manual fixes applied successfully\n")
-
-    except Exception as e:
-        logging.error(f"Error fixing data: {e}")
-        sys.exit(1)
-
     # 4. Cross Pre/Post Data
     logging.info("STEP 4: Renaming and crossing pre/post dataframes...\n")
 
@@ -140,8 +120,37 @@ def main():
         logging.error(f"Error computing Hake Metric: {e}")
         sys.exit(1)
 
-    # 7. Save Outputs
-    logging.info("STEP 7: Saving results to Parquet...\n")
+    # 7. Clean and Fix Data
+    logging.info("STEP 7: Cleaning data and fixing manual errors...\n")
+
+    try:
+        # Fix typo in student ID
+        fix_exprs = [
+            (
+                pl.when(pl.col("id") == "RamiroMaeztu-rya")
+                .then(pl.lit("RamiroMaeztu-kya"))
+                .otherwise(pl.col("id"))
+                .alias("id")
+            ),
+            (
+                pl.when(pl.col("id") == "Laguna-i9p")
+                .then(pl.lit("control"))
+                .otherwise(pl.col("grupo"))
+                .alias("grupo")
+            )  
+        ] 
+         
+        for fix_expr in fix_exprs:
+            df_cruzado = df_cruzado.with_columns(fix_expr)
+            
+        logging.info(" -> ID manual fixes applied successfully\n")
+
+    except Exception as e:
+        logging.error(f"Error fixing data: {e}")
+        sys.exit(1)
+
+    # 8. Save Outputs
+    logging.info("STEP 8: Saving results to Parquet...\n")
 
     try:
         df_cruzado_filename = 'processed_pre_post_forms.parquet'
