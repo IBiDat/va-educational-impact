@@ -196,7 +196,6 @@ def process_forms_data(raw_data_dir):
                 [
                     pl.lit('pre').alias('periodo') if 'pre' in raw_filename else pl.lit('post').alias('periodo'),
 
-                    # 👇 NUEVA COLUMNA centro
                     pl.col("id").str.split("-").list.get(0).alias("centro"),
 
                     (pl.col('puntuación').str.splitn(" / ", 2).struct.field("field_0").cast(pl.Int64) / MAX_PUNTUACION_TC).alias('puntuacion_tc'),
