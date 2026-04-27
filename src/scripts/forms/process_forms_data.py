@@ -30,7 +30,7 @@ hashes_dir = os.path.join(project_path, 'data', 'hashes', 'processed_data')
 
 # --- LOCAL IMPORTS ---
 
-from src.utils.forms.forms_data_processing import process_forms_data, add_hake_gains
+from src.utils.forms.forms_data_processing import process_forms_data, add_hake_gains, add_hake_gain_categorization
 
 ###########################################################################################
 
@@ -115,7 +115,8 @@ def main():
                 ]
 
         df_cruzado = add_hake_gains(df_cruzado, metrics_to_hake, max_score=1.0)
- 
+        df_cruzado = add_hake_gain_categorization(df_cruzado)
+
     except Exception as e:
         logging.error(f"Error computing Hake Metric: {e}")
         sys.exit(1)

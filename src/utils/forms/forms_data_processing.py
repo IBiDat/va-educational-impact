@@ -248,3 +248,38 @@ def add_hake_gains(df, metrics, max_score=1.0):
     return df.with_columns(hake_exprs)
 
 #########################################################################################################################################################
+
+def add_hake_gain_categorization(df):
+    """
+    Categoriza las columnas de Ganancia de Hake en 'Bajo', 'Medio' y 'Alto'
+    usando los percentiles 33 y 67, siguiendo el mismo criterio que add_categorization.
+    """
+    # Detectamos automáticamente las columnas de Hake presentes en el DataFrame
+    cols_to_categorize = [c for c in df.columns if c.endswith('_hake_gain')]
+
+    for col in cols_to_categorize:
+        # 1. VERIFICACIÓN: columna inexistente, tipo Null o completamente vacía
+        if col not in df.columns or df[col].dtype == pl.Null or df[col].null_count() == df.height:
+            df = df.with_columns(pl.lit(None).alias(f"{col}_cat"))
+            continue
+
+        # 2. Calculamos los límites de los cuantiles ignorando nulos
+        q33 = df.select(pl.col(col).drop_nulls().quantile(0.33)).to_series()[0]
+        q67 = df.select(pl.col(col).drop_nulls().quantile(0.67)).to_series()[0]
+
+        # 3. Si los cuantiles son nulos, saltamos
+        if q33 is None or q67 is None:
+            df = df.with_columns(pl.lit(None).alias(f"{col}_cat"))
+            continue
+
+        # 4. Aplicamos la categorización
+        df = df.with_columns(
+            pl.when(pl.col(col) <= q33).then(pl.lit("Bajo"))
+            .when(pl.col(col) <= q67).then(pl.lit("Medio"))
+            .otherwise(pl.lit("Alto"))
+            .alias(f"{col}_cat")
+        )
+
+    return df
+
+#########################################################################################################################################################
