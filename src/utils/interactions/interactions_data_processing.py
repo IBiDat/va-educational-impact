@@ -45,10 +45,10 @@ def process_interactions_data(raw_data):
         evaluator_chat_used = pl.col('evaluation_answers_counts') > 0
     ).with_columns(
         pl.when(pl.col("chat_interactions_counts") == 0)
-        .then(pl.lit("Not_Used"))
+        .then(pl.lit("No Usado"))
         .otherwise(
             pl.col("chat_interactions_counts")
-            .qcut(4, labels=["Low", "Lower_Intermediate", "Upper_Intermediate", "High"], allow_duplicates=True)
+            .qcut(3, labels=["Baja", "Media", "Alta"], allow_duplicates=True)
             .cast(pl.Utf8)
         )
         .alias("chat_freq_use")
@@ -163,15 +163,13 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
 
 def categorize_wsdi(wsdi: float) -> str:
     if wsdi <= 0.5:
-        return "Not_Relevant" # < 0.5
+        return "No Relevante" # < 0.5
     elif wsdi < 1.5:
-        return "Low" # [0.5, 1.5)
-    elif wsdi < 2.:
-        return "Lower_Intermediate" # [1.5, 2)
+        return "Superficial" # [0.5, 1.5)
     elif wsdi < 2.5:
-        return "Upper_Intermediate" # [2, 2.5)
+        return "Intermedia" # [1.5, 2.5)
     else:
-        return "High" # >= 2.5
+        return "Profunda" # >= 2.5
 
 #########################################################################################################################################################
 
@@ -219,19 +217,38 @@ def process_combined_interactions_data(interactions_df):
 
     interactions_df = interactions_df.with_columns(
             high_quality_use = pl.col('WSDI_cat').is_in([
-                #'Low_Intermediate',
-                'Upper_Intermediate', 
-                'High'
+                'Intermedia', 
+                'Profunda'
             ]),
         ).with_columns(
             pl.col('high_quality_use').replace(None, False)
         )
     
     return interactions_df
-    
+
 #########################################################################################################################################################
 
-import polars as pl
+def segment_experimental_type(interactions_df):
+    """
+    Segmenta el grupo experimental en base a Frecuencia y Calidad de uso.
+    
+    - AA: Frecuencia Alta / Calidad Alta
+    - BA: Frecuencia no-Alta / Calidad Alta
+    - AB: Frecuencia Alta / Calidad Baja
+    - BB: Frecuencia no-Alta / Calidad Baja
+    """
+    freq_alta = pl.col("chat_freq_use") == "Alta"
+    calidad_alta = pl.col("high_quality_use")
+
+    interactions_df = interactions_df.with_columns(
+        pl.when( freq_alta &  calidad_alta).then(pl.lit("AA"))
+          .when(~freq_alta &  calidad_alta).then(pl.lit("BA"))
+          .when( freq_alta & ~calidad_alta).then(pl.lit("AB"))
+          .otherwise(pl.lit("BB"))
+          .alias("experimental_type_freq_quality")
+    )
+
+#########################################################################################################################################################
 
 def analizar_rendimiento_por_interaccion(df_parquet, df_interacciones):
     """
