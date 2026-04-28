@@ -141,14 +141,14 @@ def add_categorization(df):
 
         # 4. Aplicamos la categorización
         df = df.with_columns(
-            pl.when(pl.col(col) <= q33).then(pl.lit("Bajo"))
-            .when(pl.col(col) <= q67).then(pl.lit("Medio"))
-            .otherwise(pl.lit("Alto"))
+            pl.when(pl.col(col) <= q33).then(pl.lit("Baja"))
+            .when(pl.col(col) <= q67).then(pl.lit("Media"))
+            .otherwise(pl.lit("Alta"))
             .alias(f"{col}_cat")
         )
 
     # Generación de la Puntuación Final Sintética
-    cat_mapping = {"Bajo": 1, "Medio": 2, "Alto": 3}
+    cat_mapping = {"Baja": 1, "Media": 2, "Alta": 3}
     
     df = df.with_columns(
         ((pl.col("puntuacion_tc_cat").replace(cat_mapping).cast(pl.Float32) + 
@@ -251,7 +251,7 @@ def add_hake_gains(df, metrics, max_score=1.0):
 
 def add_hake_gain_categorization(df):
     """
-    Categoriza las columnas de Ganancia de Hake en 'Bajo', 'Medio' y 'Alto'
+    Categoriza las columnas de Ganancia de Hake en 'Baja', 'Media' y 'Alta'
     usando los percentiles 33 y 67, siguiendo el mismo criterio que add_categorization.
     """
     # Detectamos automáticamente las columnas de Hake presentes en el DataFrame
@@ -274,9 +274,9 @@ def add_hake_gain_categorization(df):
 
         # 4. Aplicamos la categorización
         df = df.with_columns(
-            pl.when(pl.col(col) <= q33).then(pl.lit("Bajo"))
-            .when(pl.col(col) <= q67).then(pl.lit("Medio"))
-            .otherwise(pl.lit("Alto"))
+            pl.when(pl.col(col) <= q33).then(pl.lit("Baja"))
+            .when(pl.col(col) <= q67).then(pl.lit("Media"))
+            .otherwise(pl.lit("Alta"))
             .alias(f"{col}_cat")
         )
 
