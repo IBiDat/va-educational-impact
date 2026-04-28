@@ -114,27 +114,6 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
     semantic_depth_data = {}
 
     data_ids = list(raw_data.keys())
-
-    for data_id in data_ids:
-        user_interactions = raw_data[data_id]['chat_interactions']
-        if user_interactions:
-            semantic_depth_data[data_id] = []
-            for interaction in user_interactions:
-                response = semantic_depth_index(
-                    client=client, 
-                    model=model, 
-                    temperature=temperature, 
-                    user_interaction=interaction
-                )
-                semantic_depth_data[data_id].append(response)
-
-    return semantic_depth_data
-
-def generate_semantic_depth_index(client, model, temperature, raw_data):
-
-    semantic_depth_data = {}
-
-    data_ids = list(raw_data.keys())
     total_ids = len(data_ids)
 
     for idx, data_id in enumerate(data_ids, start=1):
@@ -164,10 +143,10 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
 def categorize_wsdi(wsdi: float) -> str:
     if wsdi <= 0.5:
         return "No Relevante" # < 0.5
-    elif wsdi < 1.5:
-        return "Superficial" # [0.5, 1.5)
+    elif wsdi < 2:
+        return "Superficial" # [0.5, 2)
     elif wsdi < 2.5:
-        return "Intermedia" # [1.5, 2.5)
+        return "Intermedia" # [2, 2.5)
     else:
         return "Profunda" # >= 2.5
 
@@ -240,11 +219,11 @@ def segment_experimental_type(interactions_df):
     freq_alta = pl.col("chat_freq_use") == "Alta"
     calidad_alta = pl.col("high_quality_use")
 
-    interactions_df = interactions_df.with_columns(
-        pl.when( freq_alta &  calidad_alta).then(pl.lit("AA"))
-          .when(~freq_alta &  calidad_alta).then(pl.lit("BA"))
-          .when( freq_alta & ~calidad_alta).then(pl.lit("AB"))
-          .otherwise(pl.lit("BB"))
+    return interactions_df.with_columns(
+        pl.when( freq_alta &  calidad_alta).then(pl.lit("ExpAA"))
+          .when(~freq_alta &  calidad_alta).then(pl.lit("ExpBA"))
+          .when( freq_alta & ~calidad_alta).then(pl.lit("ExpAB"))
+          .otherwise(pl.lit("ExpBB"))
           .alias("experimental_type_freq_quality")
     )
 

@@ -238,7 +238,7 @@ def add_hake_gains(df, metrics, max_score=1.0):
             pl.when(pl.col(col_pre) == max_score)
             .then(pl.lit(0.0))
             .otherwise(
-                (pl.col(col_post) - pl.col(col_pre)) / (max_score - pl.col(col_pre))
+                ((pl.col(col_post) - pl.col(col_pre)) / (max_score - pl.col(col_pre))).round(3)
             )
             .alias(f"{metric}_hake_gain") # ej: puntuacion_tc_hake_gain
         )

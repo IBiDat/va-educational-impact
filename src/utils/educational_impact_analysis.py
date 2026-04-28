@@ -2,12 +2,31 @@
 
 import math
 import numpy as np
+import polars as pl
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 sns.set_style('whitegrid')
+
+#########################################################################################################################################################
+
+def group_stats(df, cols, group_by):
+    stats = [
+        expr
+        for col in cols
+        for expr in [
+            pl.col(col).mean().alias(f"{col}_mean"),
+            pl.col(col).std().alias(f"{col}_std"),
+            pl.col(col).quantile(0.25).alias(f"{col}_q25"),
+            pl.col(col).quantile(0.50).alias(f"{col}_median"),
+            pl.col(col).quantile(0.75).alias(f"{col}_q75"),
+            pl.col(col).min().alias(f"{col}_min"),
+            pl.col(col).max().alias(f"{col}_max"),
+        ]
+    ]
+    return df.group_by(group_by).agg(stats)
 
 #########################################################################################################################################################
 
@@ -160,7 +179,7 @@ def plot_quant_distribution(df, quant_cols, max_cols=3, box_color="skyblue", his
 
 #########################################################################################################################################################
 
-def plot_quant_comparison(df, comparisons, group_by=None, showfliers=True, labelbottom=True, xlabel_rotation=30, max_cols=3, title=False, palette="Set2", bbox_to_anchor=(0.5, -0.03)):
+def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showfliers=True, order=None, labelbottom=True, xlabel_rotation=30, max_cols=3, title=False, palette="Set2", bbox_to_anchor=(0.5, -0.03)):
     
     n_blocks = len(comparisons)
 
@@ -175,7 +194,7 @@ def plot_quant_comparison(df, comparisons, group_by=None, showfliers=True, label
 
     fig, axes = plt.subplots(
         nrows=n_rows_fig, ncols=n_cols_fig,
-        figsize=(6 * n_cols_fig, 4 * n_rows_fig)
+        figsize=(6 * n_cols_fig, 4 * n_rows_fig) if not figsize else figsize
     )
 
     # Forzamos array 2D
@@ -191,6 +210,7 @@ def plot_quant_comparison(df, comparisons, group_by=None, showfliers=True, label
         group_vals = df[group_by].drop_nulls().unique().sort().to_list()
         group_colors = sns.color_palette(palette, len(group_vals))
         group_color_map = dict(zip(group_vals, group_colors))
+        hue_order = order if order else group_vals
 
     # --- 2. DIBUJAR LOS BLOQUES ---
     for i, col_group in enumerate(comparisons):
@@ -207,7 +227,7 @@ def plot_quant_comparison(df, comparisons, group_by=None, showfliers=True, label
                 value_vars=col_group,
                 var_name="variable",
                 value_name="valor"
-            ).dropna()
+            ).dropna(subset=["valor", group_by])
         else:
             pdf = df.select(col_group).to_pandas()
             tidy = pdf.melt(
@@ -231,17 +251,20 @@ def plot_quant_comparison(df, comparisons, group_by=None, showfliers=True, label
                 hue=group_by, showfliers=showfliers,
                 palette=palette, ax=ax_box,
                 width=0.5, linewidth=1.5,
-                legend=False
+                legend=False, hue_order=hue_order
             )
             for j, col in enumerate(col_group):
-                for g, group_val in enumerate(group_vals):
+                for g, group_val in enumerate(hue_order):
                     mask = (tidy["variable"] == col) & (tidy[group_by] == group_val)
+                    if mask.sum() == 0:
+                        continue
                     mean_val = tidy.loc[mask, "valor"].mean()
-                    n_groups = len(group_vals)
+                    n_groups = len(hue_order)
                     offset = (g - (n_groups - 1) / 2) * (0.5 / n_groups)
                     ax_box.plot(
                         j + offset, mean_val, marker="D",
-                        color=group_colors[g], markersize=6,
+                        color=group_color_map[group_val],
+                        markersize=6,
                         markeredgecolor="black", markeredgewidth=0.8,
                         zorder=5
                     )
@@ -271,9 +294,9 @@ def plot_quant_comparison(df, comparisons, group_by=None, showfliers=True, label
     if group_by:
         handles = [
             mpatches.Patch(color=group_color_map[g], alpha=0.7, label=str(g))
-            for g in group_vals
+            for g in hue_order
         ]
-        legend_ncol = len(group_vals)
+        legend_ncol = len(hue_order)
     else:
         all_vars = [col for col_group in comparisons for col in col_group]
         unique_vars = list(dict.fromkeys(all_vars))
