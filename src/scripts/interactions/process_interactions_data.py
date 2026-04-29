@@ -34,7 +34,8 @@ output_dir = os.path.join(project_path, 'data', 'interactions', 'processed_data'
 from src.utils.interactions.interactions_data_processing import (
     process_interactions_data,
     process_semantic_depth_data,
-    process_combined_interactions_data
+    process_combined_interactions_data,
+    segment_experimental_type
 )
 
 ###########################################################################################
@@ -98,7 +99,7 @@ def main():
     logging.info("STEP 4: Processing combined interactions data...\n")
 
     interactions_df = process_combined_interactions_data(interactions_df)
-
+    interactions_df = segment_experimental_type(interactions_df)
 
     # 5. Save Outputs
     logging.info("STEP 5: Saving results to Parquet...\n")

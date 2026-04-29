@@ -141,14 +141,14 @@ def add_categorization(df):
 
         # 4. Aplicamos la categorización
         df = df.with_columns(
-            pl.when(pl.col(col) <= q33).then(pl.lit("Bajo"))
-            .when(pl.col(col) <= q67).then(pl.lit("Medio"))
-            .otherwise(pl.lit("Alto"))
+            pl.when(pl.col(col) <= q33).then(pl.lit("Baja"))
+            .when(pl.col(col) <= q67).then(pl.lit("Media"))
+            .otherwise(pl.lit("Alta"))
             .alias(f"{col}_cat")
         )
 
     # Generación de la Puntuación Final Sintética
-    cat_mapping = {"Bajo": 1, "Medio": 2, "Alto": 3}
+    cat_mapping = {"Baja": 1, "Media": 2, "Alta": 3}
     
     df = df.with_columns(
         ((pl.col("puntuacion_tc_cat").replace(cat_mapping).cast(pl.Float32) + 
@@ -196,7 +196,6 @@ def process_forms_data(raw_data_dir):
                 [
                     pl.lit('pre').alias('periodo') if 'pre' in raw_filename else pl.lit('post').alias('periodo'),
 
-                    # 👇 NUEVA COLUMNA centro
                     pl.col("id").str.split("-").list.get(0).alias("centro"),
 
                     (pl.col('puntuación').str.splitn(" / ", 2).struct.field("field_0").cast(pl.Int64) / MAX_PUNTUACION_TC).alias('puntuacion_tc'),
@@ -239,7 +238,7 @@ def add_hake_gains(df, metrics, max_score=1.0):
             pl.when(pl.col(col_pre) == max_score)
             .then(pl.lit(0.0))
             .otherwise(
-                (pl.col(col_post) - pl.col(col_pre)) / (max_score - pl.col(col_pre))
+                ((pl.col(col_post) - pl.col(col_pre)) / (max_score - pl.col(col_pre))).round(3)
             )
             .alias(f"{metric}_hake_gain") # ej: puntuacion_tc_hake_gain
         )
@@ -247,5 +246,40 @@ def add_hake_gains(df, metrics, max_score=1.0):
         
     # Polars ejecuta todas estas expresiones en paralelo
     return df.with_columns(hake_exprs)
+
+#########################################################################################################################################################
+
+def add_hake_gain_categorization(df):
+    """
+    Categoriza las columnas de Ganancia de Hake en 'Baja', 'Media' y 'Alta'
+    usando los percentiles 33 y 67, siguiendo el mismo criterio que add_categorization.
+    """
+    # Detectamos automáticamente las columnas de Hake presentes en el DataFrame
+    cols_to_categorize = [c for c in df.columns if c.endswith('_hake_gain')]
+
+    for col in cols_to_categorize:
+        # 1. VERIFICACIÓN: columna inexistente, tipo Null o completamente vacía
+        if col not in df.columns or df[col].dtype == pl.Null or df[col].null_count() == df.height:
+            df = df.with_columns(pl.lit(None).alias(f"{col}_cat"))
+            continue
+
+        # 2. Calculamos los límites de los cuantiles ignorando nulos
+        q33 = df.select(pl.col(col).drop_nulls().quantile(0.33)).to_series()[0]
+        q67 = df.select(pl.col(col).drop_nulls().quantile(0.67)).to_series()[0]
+
+        # 3. Si los cuantiles son nulos, saltamos
+        if q33 is None or q67 is None:
+            df = df.with_columns(pl.lit(None).alias(f"{col}_cat"))
+            continue
+
+        # 4. Aplicamos la categorización
+        df = df.with_columns(
+            pl.when(pl.col(col) <= q33).then(pl.lit("Baja"))
+            .when(pl.col(col) <= q67).then(pl.lit("Media"))
+            .otherwise(pl.lit("Alta"))
+            .alias(f"{col}_cat")
+        )
+
+    return df
 
 #########################################################################################################################################################

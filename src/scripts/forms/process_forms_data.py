@@ -30,7 +30,7 @@ hashes_dir = os.path.join(project_path, 'data', 'hashes', 'processed_data')
 
 # --- LOCAL IMPORTS ---
 
-from src.utils.forms.forms_data_processing import process_forms_data, add_hake_gains
+from src.utils.forms.forms_data_processing import process_forms_data, add_hake_gains, add_hake_gain_categorization
 
 ###########################################################################################
 
@@ -69,26 +69,6 @@ def main():
 
     except Exception as e:
         logging.error(f"Error during forms processing: {e}")
-        sys.exit(1)
-
-    # 3. Clean and Fix Data
-    logging.info("STEP 3: Cleaning data and fixing manual errors...\n")
-
-    try:
-        # Fix typo in student ID
-        fix_expr = (
-            pl.when(pl.col("id") == "RamiroMaeztu-rya")
-            .then(pl.lit("RamiroMaeztu-kya"))
-            .otherwise(pl.col("id"))
-            .alias("id")
-        )
-        
-        df_pre = df_pre.with_columns(fix_expr)
-        df_post = df_post.with_columns(fix_expr)
-        logging.info(" -> ID manual fixes applied successfully\n")
-
-    except Exception as e:
-        logging.error(f"Error fixing data: {e}")
         sys.exit(1)
 
     # 4. Cross Pre/Post Data
@@ -135,13 +115,43 @@ def main():
                 ]
 
         df_cruzado = add_hake_gains(df_cruzado, metrics_to_hake, max_score=1.0)
- 
+        df_cruzado = add_hake_gain_categorization(df_cruzado)
+
     except Exception as e:
         logging.error(f"Error computing Hake Metric: {e}")
         sys.exit(1)
 
-    # 7. Save Outputs
-    logging.info("STEP 7: Saving results to Parquet...\n")
+    # 7. Clean and Fix Data
+    logging.info("STEP 7: Cleaning data and fixing manual errors...\n")
+
+    try:
+        # Fix typo in student ID
+        fix_exprs = [
+            (
+                pl.when(pl.col("id") == "RamiroMaeztu-rya")
+                .then(pl.lit("RamiroMaeztu-kya"))
+                .otherwise(pl.col("id"))
+                .alias("id")
+            ),
+            (
+                pl.when(pl.col("id") == "Laguna-i9p")
+                .then(pl.lit("control"))
+                .otherwise(pl.col("grupo"))
+                .alias("grupo")
+            )  
+        ] 
+         
+        for fix_expr in fix_exprs:
+            df_cruzado = df_cruzado.with_columns(fix_expr)
+            
+        logging.info(" -> ID manual fixes applied successfully\n")
+
+    except Exception as e:
+        logging.error(f"Error fixing data: {e}")
+        sys.exit(1)
+
+    # 8. Save Outputs
+    logging.info("STEP 8: Saving results to Parquet...\n")
 
     try:
         df_cruzado_filename = 'processed_pre_post_forms.parquet'

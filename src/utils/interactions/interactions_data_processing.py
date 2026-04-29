@@ -45,10 +45,10 @@ def process_interactions_data(raw_data):
         evaluator_chat_used = pl.col('evaluation_answers_counts') > 0
     ).with_columns(
         pl.when(pl.col("chat_interactions_counts") == 0)
-        .then(pl.lit("Not_Used"))
+        .then(pl.lit("No Usado"))
         .otherwise(
             pl.col("chat_interactions_counts")
-            .qcut(4, labels=["Low", "Lower_Intermediate", "Upper_Intermediate", "High"], allow_duplicates=True)
+            .qcut(3, labels=["Baja", "Media", "Alta"], allow_duplicates=True)
             .cast(pl.Utf8)
         )
         .alias("chat_freq_use")
@@ -114,27 +114,6 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
     semantic_depth_data = {}
 
     data_ids = list(raw_data.keys())
-
-    for data_id in data_ids:
-        user_interactions = raw_data[data_id]['chat_interactions']
-        if user_interactions:
-            semantic_depth_data[data_id] = []
-            for interaction in user_interactions:
-                response = semantic_depth_index(
-                    client=client, 
-                    model=model, 
-                    temperature=temperature, 
-                    user_interaction=interaction
-                )
-                semantic_depth_data[data_id].append(response)
-
-    return semantic_depth_data
-
-def generate_semantic_depth_index(client, model, temperature, raw_data):
-
-    semantic_depth_data = {}
-
-    data_ids = list(raw_data.keys())
     total_ids = len(data_ids)
 
     for idx, data_id in enumerate(data_ids, start=1):
@@ -163,15 +142,13 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
 
 def categorize_wsdi(wsdi: float) -> str:
     if wsdi <= 0.5:
-        return "Not_Relevant" # < 0.5
-    elif wsdi < 1.5:
-        return "Low" # [0.5, 1.5)
-    elif wsdi < 2.:
-        return "Lower_Intermediate" # [1.5, 2)
+        return "No Relevante" # < 0.5
+    elif wsdi < 2:
+        return "Superficial" # [0.5, 2)
     elif wsdi < 2.5:
-        return "Upper_Intermediate" # [2, 2.5)
+        return "Intermedia" # [2, 2.5)
     else:
-        return "High" # >= 2.5
+        return "Profunda" # >= 2.5
 
 #########################################################################################################################################################
 
@@ -219,14 +196,77 @@ def process_combined_interactions_data(interactions_df):
 
     interactions_df = interactions_df.with_columns(
             high_quality_use = pl.col('WSDI_cat').is_in([
-                #'Low_Intermediate',
-                'Upper_Intermediate', 
-                'High'
+                'Intermedia', 
+                'Profunda'
             ]),
         ).with_columns(
             pl.col('high_quality_use').replace(None, False)
         )
     
     return interactions_df
-    
+
 #########################################################################################################################################################
+
+def segment_experimental_type(interactions_df):
+    """
+    Segmenta el grupo experimental en base a Frecuencia y Calidad de uso.
+    
+    - AA: Frecuencia Alta / Calidad Alta
+    - BA: Frecuencia no-Alta / Calidad Alta
+    - AB: Frecuencia Alta / Calidad Baja
+    - BB: Frecuencia no-Alta / Calidad Baja
+    """
+    freq_alta = pl.col("chat_freq_use") == "Alta"
+    calidad_alta = pl.col("high_quality_use")
+
+    return interactions_df.with_columns(
+        pl.when( freq_alta &  calidad_alta).then(pl.lit("ExpAA"))
+          .when(~freq_alta &  calidad_alta).then(pl.lit("ExpBA"))
+          .when( freq_alta & ~calidad_alta).then(pl.lit("ExpAB"))
+          .otherwise(pl.lit("ExpBB"))
+          .alias("experimental_type_freq_quality")
+    )
+
+#########################################################################################################################################################
+
+def analizar_rendimiento_por_interaccion(df_parquet, df_interacciones):
+    """
+    Cruza los resultados de aprendizaje con las categorías de interacción del chatbot.
+    
+    Args:
+        df_parquet: DataFrame de Polars con los resultados cruzados (Pre/Post/Hake).
+        df_interacciones: DataFrame con las columnas ['id', 'WSDI_cat'].
+    """
+    
+    # 1. Aseguramos el cruce por ID para tener la categoría WSDI junto a las notas
+    # Seleccionamos solo las columnas necesarias de interacciones para no ensuciar
+    df_merged = df_parquet.join(
+        df_interacciones.select(["id", "WSDI_cat"]), 
+        on="id", 
+        how="left"
+    )
+
+    # 2. Definimos las métricas que queremos resumir
+    # Usamos las ganancias de Hake que ya tienes en tu Parquet
+    metricas = [
+        "puntuacion_tc_hake_gain",
+        "puntuacion_tc_retencion_hake_gain",
+        "puntuacion_tc_transferencia_hake_gain",
+        "puntuacion_tc_post",
+        "puntuacion_tcc_rel_post" # Carga cognitiva relevante (si quieres verla)
+    ]
+
+    # 3. Realizamos la agregación por categoría de WSDI
+    resumen = (
+        df_merged
+        .filter(pl.col("WSDI_cat").is_not_null()) # Quitamos alumnos sin interacción (Control)
+        .group_by("WSDI_cat")
+        .agg([
+            pl.count("id").alias("n_alumnos"),
+            *[pl.col(m).mean().round(3).alias(f"mean_{m}") for m in metricas],
+            *[pl.col(m).std().round(3).alias(f"std_{m}") for m in metricas]
+        ])
+        .sort("mean_puntuacion_tc_hake_gain", descending=True)
+    )
+
+    return resumen, df_merged
