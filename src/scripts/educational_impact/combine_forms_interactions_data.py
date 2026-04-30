@@ -57,9 +57,15 @@ forms_df = forms_df[forms_cols_analysis]
 forms_interactions_df = forms_df.join(interactions_df, how='left', on='id')
 
 forms_interactions_df = forms_interactions_df.with_columns(
-    pl.when(pl.col('grupo') == 'experimental').then(pl.col('experimental_type_freq_quality'))
+    pl.when(pl.col('grupo') == 'experimental').then(pl.col('experimental_type_freq_quality_v1'))
         .otherwise(pl.col('grupo'))
-        .alias('grupo_segmented')
+        .alias('grupo_segmented_v1')
+)
+
+forms_interactions_df = forms_interactions_df.with_columns(
+    pl.when(pl.col('grupo') == 'experimental').then(pl.col('experimental_type_freq_quality_v2'))
+        .otherwise(pl.col('grupo'))
+        .alias('grupo_segmented_v2')
 )
 
 forms_interactions_df.write_parquet(output_path)
