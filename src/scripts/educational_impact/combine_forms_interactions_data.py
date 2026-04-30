@@ -87,7 +87,10 @@ def main():
             'puntuacion_tc_transferencia_hake_gain',
             'puntuacion_tc_hake_gain_cat',
             'puntuacion_tc_retencion_hake_gain_cat',
-            'puntuacion_tc_transferencia_hake_gain_cat'
+            'puntuacion_tc_transferencia_hake_gain_cat',
+            'mejora',
+            'puntuacion_tc_cat_trad_scale_pre',
+            'puntuacion_tc_cat_trad_scale_post'
         ]
 
         forms_cols_analysis = base_cols + hake_metrics + [
@@ -95,7 +98,7 @@ def main():
             for period in ['pre', 'post']
             for cat_suffix in ['', '_cat']
             for metric in metrics_pre_post
-        ] + metrics_post
+        ] + metrics_post 
 
         forms_df = forms_df.select(forms_cols_analysis)
         logging.info(f" -> Forms columns filtered successfully. Total columns: {len(forms_cols_analysis)}\n")

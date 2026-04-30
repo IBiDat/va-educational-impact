@@ -147,6 +147,16 @@ def add_categorization(df):
             .alias(f"{col}_cat")
         )
 
+
+    df = df.with_columns(
+        pl.when(pl.col('puntuacion_tc') < 0.5).then(pl.lit('suspenso'))
+        .when((pl.col('puntuacion_tc') >= 0.5) & (pl.col('puntuacion_tc') < 0.6)).then(pl.lit('suficiente'))
+        .when((pl.col('puntuacion_tc') >= 0.6) & (pl.col('puntuacion_tc') < 0.7)).then(pl.lit('bien'))
+        .when((pl.col('puntuacion_tc') >= 0.7) & (pl.col('puntuacion_tc') < 0.9)).then(pl.lit('notable'))
+        .otherwise(pl.lit('sobresaliente'))
+        .alias('puntuacion_tc_cat_trad_scale')
+    )
+
     # Generación de la Puntuación Final Sintética
     cat_mapping = {"Baja": 1, "Media": 2, "Alta": 3}
     
@@ -279,6 +289,13 @@ def add_hake_gain_categorization(df):
             .otherwise(pl.lit("Alta"))
             .alias(f"{col}_cat")
         )
+
+    df = df.with_columns(
+        pl.when(pl.col('puntuacion_tc_hake_gain') > 0)
+        .then(True)
+        .otherwise(False)
+        .alias('mejora')
+    )
 
     return df
 

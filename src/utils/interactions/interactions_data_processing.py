@@ -52,8 +52,16 @@ def process_interactions_data(raw_data):
             .cast(pl.Utf8)
         )
         .alias("chat_freq_use")
+    ).with_columns(
+        pl.when(pl.col("chat_interactions_counts") == 0)
+        .then(pl.lit("No Usado"))
+        .otherwise(
+            pl.col("chat_interactions_counts")
+            .qcut(2, labels=["Baja", "Alta"], allow_duplicates=True) # q50 is used
+            .cast(pl.Utf8)
+        )
+        .alias("chat_freq_use_v2")
     )
-
     return interactions_data
 
 #########################################################################################################################################################
