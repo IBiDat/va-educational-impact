@@ -1,71 +1,157 @@
+###########################################################################################
+
+# --- IMPORTS ---
+
 import os
+import sys
+import logging
 import polars as pl
 
+###########################################################################################
+
+# --- LOGGING CONFIGURATION ---
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
+###########################################################################################
+
+# --- PATH CONFIGURATION ---
+
+# Base paths
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..', '..', '..')
 
-output_filename = 'processed_forms_interactions_data.parquet'
-output_dir = os.path.join(project_path, 'data', 'combined')
-output_path = os.path.join(output_dir, output_filename)
-os.makedirs(output_dir, exist_ok=True)
-
+# Input data directories
 forms_data_filename = 'processed_pre_post_forms.parquet'
 forms_data_path = os.path.join(project_path, 'data', 'forms', 'processed_data', forms_data_filename)
 
 interactions_data_filename = 'interactions_processed_data.parquet'
 interactions_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', interactions_data_filename)
 
-forms_df = pl.read_parquet(forms_data_path)
-interactions_df = pl.read_parquet(interactions_data_path)
+# Output data directories
+output_filename = 'processed_forms_interactions_data.parquet'
+output_dir = os.path.join(project_path, 'data', 'combined')
+output_path = os.path.join(output_dir, output_filename)
 
-base_cols = ['id', 'centro', 'grupo']
+###########################################################################################
 
-metrics_pre_post = [
-    'puntuacion_tc', 
-    'puntuacion_ta', 
-    'puntuacion_tc_retencion', 
-    'puntuacion_tc_transferencia'
-]
+# --- MAIN EXECUTION ---
 
-metrics_post = [
-    'puntuacion_tcc_rel_post', 
-    'puntuacion_tcc_int_post', 
-    'puntuacion_tcc_ext_post', 
-    'puntuacion_tcc_rel_cat_post', 
-    'puntuacion_tcc_int_cat_post', 
-    'puntuacion_tcc_ext_cat_post', 
-]
+def main():
+    """
+    Main execution flow for Combined Forms and Interactions Data.
+    Filters form metrics, joins with interactions data, segments the experimental 
+    groups, and saves the final processed dataset as Parquet.
+    """
+    logging.info("▶️ STARTING COMBINED DATA PROCESSING PIPELINE")
 
-hake_metrics = [
-    'puntuacion_tc_hake_gain', 
-    'puntuacion_tc_retencion_hake_gain', 
-    'puntuacion_tc_transferencia_hake_gain',
-    'puntuacion_tc_hake_gain_cat',
-    'puntuacion_tc_retencion_hake_gain_cat',
-    'puntuacion_tc_transferencia_hake_gain_cat'
-]
+    # 1. Load Data
+    logging.info("STEP 1: Loading data files...\n")
 
-forms_cols_analysis = base_cols + hake_metrics + [
-    f"{metric}{cat_suffix}_{period}"
-    for period in ['pre', 'post']
-    for cat_suffix in ['', '_cat']
-    for metric in metrics_pre_post
-] + metrics_post
+    try:
+        forms_df = pl.read_parquet(forms_data_path)
+        logging.info(f" -> Loaded file: {forms_data_filename}")
 
-forms_df = forms_df[forms_cols_analysis]
+        interactions_df = pl.read_parquet(interactions_data_path)
+        logging.info(f" -> Loaded file: {interactions_data_filename}\n")
 
-forms_interactions_df = forms_df.join(interactions_df, how='left', on='id')
+    except Exception as e:
+        logging.error(f"Failed to load data: {e}")
+        sys.exit(1)
 
-forms_interactions_df = forms_interactions_df.with_columns(
-    pl.when(pl.col('grupo') == 'experimental').then(pl.col('experimental_type_freq_quality_v1'))
-        .otherwise(pl.col('grupo'))
-        .alias('grupo_segmented_v1')
-)
+    # 2. Filter Form Columns
+    logging.info("STEP 2: Selecting and filtering form columns...\n")
 
-forms_interactions_df = forms_interactions_df.with_columns(
-    pl.when(pl.col('grupo') == 'experimental').then(pl.col('experimental_type_freq_quality_v2'))
-        .otherwise(pl.col('grupo'))
-        .alias('grupo_segmented_v2')
-)
+    try:
+        base_cols = ['id', 'centro', 'grupo']
 
-forms_interactions_df.write_parquet(output_path)
+        metrics_pre_post = [
+            'puntuacion_tc', 
+            'puntuacion_ta', 
+            'puntuacion_tc_retencion', 
+            'puntuacion_tc_transferencia'
+        ]
+
+        metrics_post = [
+            'puntuacion_tcc_rel_post', 
+            'puntuacion_tcc_int_post', 
+            'puntuacion_tcc_ext_post', 
+            'puntuacion_tcc_rel_cat_post', 
+            'puntuacion_tcc_int_cat_post', 
+            'puntuacion_tcc_ext_cat_post', 
+        ]
+
+        hake_metrics = [
+            'puntuacion_tc_hake_gain', 
+            'puntuacion_tc_retencion_hake_gain', 
+            'puntuacion_tc_transferencia_hake_gain',
+            'puntuacion_tc_hake_gain_cat',
+            'puntuacion_tc_retencion_hake_gain_cat',
+            'puntuacion_tc_transferencia_hake_gain_cat'
+        ]
+
+        forms_cols_analysis = base_cols + hake_metrics + [
+            f"{metric}{cat_suffix}_{period}"
+            for period in ['pre', 'post']
+            for cat_suffix in ['', '_cat']
+            for metric in metrics_pre_post
+        ] + metrics_post
+
+        forms_df = forms_df.select(forms_cols_analysis)
+        logging.info(f" -> Forms columns filtered successfully. Total columns: {len(forms_cols_analysis)}\n")
+
+    except Exception as e:
+        logging.error(f"Error during column filtering: {e}")
+        sys.exit(1)
+
+    # 3. Join Dataframes
+    logging.info("STEP 3: Joining forms and interactions dataframe...\n")
+
+    try:
+        forms_interactions_df = forms_df.join(
+            interactions_df, 
+            how='left', 
+            on='id'
+        )
+        logging.info(f" -> Join completed successfully\n")
+
+    except Exception as e:
+        logging.error(f"Error during dataframe join: {e}")
+        sys.exit(1)
+
+    # 4. Process and Segment Groups
+    logging.info("STEP 4: Segmenting experimental groups...\n")
+
+    try:
+        for version in ['v1', 'v2']:
+            forms_interactions_df = forms_interactions_df.with_columns(
+                pl.when(pl.col('grupo') == 'experimental')
+                .then(pl.col(f'experimental_type_freq_quality_{version}'))
+                .otherwise(pl.col('grupo'))
+                .alias(f'grupo_segmented_{version}')
+            )
+
+        logging.info(" -> Experimental segmentation variables created successfully\n")
+
+    except Exception as e:
+        logging.error(f"Error during data segmentation: {e}")
+        sys.exit(1)
+
+    # 5. Save Outputs
+    logging.info("STEP 5: Saving results to Parquet...\n")
+
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+        forms_interactions_df.write_parquet(output_path)
+        logging.info(f" -> Saved: {output_path}\n")
+
+    except Exception as e:
+        logging.error(f"Failed to save output files: {e}")
+        sys.exit(1)
+
+    logging.info("✅ PROCESSING PIPELINE FINISHED SUCCESSFULLY")
+
+###########################################################################################
+
+if __name__ == "__main__":
+    main()
