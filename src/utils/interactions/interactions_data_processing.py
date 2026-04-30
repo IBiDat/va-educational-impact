@@ -48,7 +48,7 @@ def process_interactions_data(raw_data):
         .then(pl.lit("No Usado"))
         .otherwise(
             pl.col("chat_interactions_counts")
-            .qcut(3, labels=["Baja", "Media", "Alta"], allow_duplicates=True)
+            .qcut(3, labels=["Baja", "Media", "Alta"], allow_duplicates=True) # q33 and q67 are used
             .cast(pl.Utf8)
         )
         .alias("chat_freq_use")
@@ -142,7 +142,7 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
 
 def categorize_wsdi(wsdi: float) -> str:
     if wsdi <= 0.5:
-        return "No Relevante" # < 0.5
+        return "Irrelevante" # < 0.5
     elif wsdi < 2:
         return "Superficial" # [0.5, 2)
     elif wsdi < 2.5:
@@ -195,12 +195,15 @@ def process_semantic_depth_data(semantic_depth_data):
 def process_combined_interactions_data(interactions_df):
 
     interactions_df = interactions_df.with_columns(
-            high_quality_use = pl.col('WSDI_cat').is_in([
-                'Intermedia', 
-                'Profunda'
-            ]),
+            pl.when(pl.col('WSDI_cat').is_null()).
+            then(pl.col('chat_freq_use')).
+            otherwise(pl.col('WSDI_cat')).
+            alias('WSDI_cat')
         ).with_columns(
-            pl.col('high_quality_use').replace(None, False)
+            pl.when(pl.col('WSDI_cat').is_in(['Intermedia', 'Profunda'])).then(True)
+            .when(pl.col('WSDI_cat') == 'No Usado').then(pl.col('WSDI_cat'))
+            .otherwise(False)
+            .alias('high_quality_use')
         )
     
     return interactions_df
@@ -217,15 +220,33 @@ def segment_experimental_type(interactions_df):
     - BB: Frecuencia no-Alta / Calidad Baja
     """
     freq_alta = pl.col("chat_freq_use") == "Alta"
-    calidad_alta = pl.col("high_quality_use")
+    freq_baja = pl.col("chat_freq_use") == "Baja"
+    freq_media = pl.col("chat_freq_use") == "Media"
+    freq_not_used = pl.col("chat_freq_use") == "No Usado"
+    calidad_alta = pl.col("high_quality_use") == True
+    calidad_baja = pl.col("high_quality_use") == False
 
-    return interactions_df.with_columns(
+    interactions_df =  interactions_df.with_columns(
         pl.when( freq_alta &  calidad_alta).then(pl.lit("ExpAA"))
           .when(~freq_alta &  calidad_alta).then(pl.lit("ExpBA"))
           .when( freq_alta & ~calidad_alta).then(pl.lit("ExpAB"))
           .otherwise(pl.lit("ExpBB"))
-          .alias("experimental_type_freq_quality")
+          .alias("experimental_type_freq_quality_v1")
     )
+
+    interactions_df =  interactions_df.with_columns(
+        pl.when( freq_alta &  calidad_alta).then(pl.lit("ExpAA"))
+          .when( freq_baja &  calidad_alta).then(pl.lit("ExpBA"))
+          .when( freq_alta &  calidad_baja).then(pl.lit("ExpAB"))
+          .when( freq_baja &  calidad_baja).then(pl.lit("ExpBB"))
+          .when( freq_media & calidad_alta).then(pl.lit("ExpMA"))
+          .when( freq_media & calidad_baja).then(pl.lit("ExpMB"))
+          .when(freq_not_used).then(pl.lit("ExpNotUsed"))
+          .otherwise(pl.lit("ExpOther"))
+          .alias("experimental_type_freq_quality_v2")
+    )
+
+    return interactions_df
 
 #########################################################################################################################################################
 
