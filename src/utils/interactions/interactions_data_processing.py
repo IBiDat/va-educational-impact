@@ -230,7 +230,12 @@ def segment_experimental_type(interactions_df):
     freq_alta = pl.col("chat_freq_use") == "Alta"
     freq_baja = pl.col("chat_freq_use") == "Baja"
     freq_media = pl.col("chat_freq_use") == "Media"
+
+    freq_alta_v2 = pl.col("chat_freq_use_v2") == "Alta"
+    freq_baja_v2 = pl.col("chat_freq_use_v2") == "Baja"
+
     freq_not_used = pl.col("chat_freq_use") == "No Usado"
+
     calidad_alta = pl.col("high_quality_use") == True
     calidad_baja = pl.col("high_quality_use") == False
 
@@ -252,6 +257,24 @@ def segment_experimental_type(interactions_df):
           .when(freq_not_used).then(pl.lit("ExpNotUsed"))
           .otherwise(pl.lit("ExpOther"))
           .alias("experimental_type_freq_quality_v2")
+    )
+
+    interactions_df =  interactions_df.with_columns(
+        pl.when( freq_alta_v2 &  calidad_alta).then(pl.lit("ExpAA"))
+          .when( freq_baja_v2 &  calidad_alta).then(pl.lit("ExpBA"))
+          .when( freq_alta_v2 &  calidad_baja).then(pl.lit("ExpAB"))
+          .when( freq_baja_v2 &  calidad_baja).then(pl.lit("ExpBB"))
+          .when(freq_not_used).then(pl.lit("ExpNotUsed"))
+          .otherwise(pl.lit("ExpOther"))
+          .alias("experimental_type_freq_quality_v3")
+    )
+
+    interactions_df =  interactions_df.with_columns(
+        pl.when(calidad_alta).then(pl.lit("ExpA"))
+          .when(calidad_baja).then(pl.lit("ExpB"))
+          .when(freq_not_used).then(pl.lit("ExpNotUsed"))
+          .otherwise(pl.lit("ExpOther"))
+          .alias("experimental_type_freq_quality_v4")
     )
 
     return interactions_df

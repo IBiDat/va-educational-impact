@@ -35,6 +35,20 @@ output_path = os.path.join(output_dir, output_filename)
 
 ###########################################################################################
 
+def segment_groups(forms_interactions_df):
+
+    for version in ['v1', 'v2', 'v3', 'v4']:
+        forms_interactions_df = forms_interactions_df.with_columns(
+            pl.when(pl.col('grupo') == 'experimental')
+            .then(pl.col(f'experimental_type_freq_quality_{version}'))
+            .otherwise(pl.col('grupo'))
+            .alias(f'grupo_segmented_{version}')
+        )
+        
+    return forms_interactions_df
+
+###########################################################################################
+
 # --- MAIN EXECUTION ---
 
 def main():
@@ -123,16 +137,11 @@ def main():
         sys.exit(1)
 
     # 4. Process and Segment Groups
-    logging.info("STEP 4: Segmenting experimental groups...\n")
+    logging.info("STEP 4: Segmenting groups...\n")
 
     try:
-        for version in ['v1', 'v2']:
-            forms_interactions_df = forms_interactions_df.with_columns(
-                pl.when(pl.col('grupo') == 'experimental')
-                .then(pl.col(f'experimental_type_freq_quality_{version}'))
-                .otherwise(pl.col('grupo'))
-                .alias(f'grupo_segmented_{version}')
-            )
+
+        forms_interactions_df = segment_groups(forms_interactions_df)
 
         logging.info(" -> Experimental segmentation variables created successfully\n")
 
