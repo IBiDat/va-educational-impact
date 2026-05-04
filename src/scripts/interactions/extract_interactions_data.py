@@ -30,7 +30,8 @@ interactions_raw_data_dir = os.path.join(project_path, 'data', 'interactions', '
 # Ensure output directory exists
 os.makedirs(interactions_raw_data_dir, exist_ok=True)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file_path = os.path.join(interactions_raw_data_dir, f'interactions_raw_data_{timestamp}.json')
+json_file_path = os.path.join(interactions_raw_data_dir, f'interactions_raw_data.json')
+txt_file_path = os.path.join(interactions_raw_data_dir, f'evaluation_questions.txt')
 
 # Database Configuration
 MONGO_URI = "mongodb://localhost:27017"
@@ -65,6 +66,7 @@ def main():
     logging.info("STEP 2: Querying users and processing interactions...\n")
     
     interactions_data = {}
+    evaluation_questions = None
     
     try:
         # Step A: Get users with 'used': True
@@ -101,8 +103,11 @@ def main():
                     interactions_data[participant_hash]['chat_interactions'].append(chat_entry)
 
                 elif i_type == 'evaluation':
+                    
+                    if not evaluation_questions:
+                        evaluation_questions = interaction.get('evaluation_questions', '')
+                    
                     eval_entry = {
-                        'evaluation_questions': interaction.get('evaluation_questions', ''),
                         'user-answers': interaction.get('user_answers', ''), 
                         'pass': interaction['evaluation_result'].get('pass', '')
                     }
@@ -117,18 +122,21 @@ def main():
     # 3. Save Outputs
     logging.info("STEP 3: Saving results to JSON...\n")
 
-    if os.path.exists(output_file_path):
+    if os.path.exists(json_file_path):
         logging.warning("⚠️  ALERTA:")
-        logging.warning(f"   The file '{os.path.basename(output_file_path)}' ALREADY EXISTS.")
+        logging.warning(f"   The file '{os.path.basename(json_file_path)}' ALREADY EXISTS.")
         logging.warning("   ❌ Operation cancelled: File was NOT overwritten.")
         logging.warning("   (Please delete the old file or rename the output configuration).")
         sys.exit(1) # Exit cleanly but indicating no save occurred
     else:
         try:
-            with open(output_file_path, 'w', encoding='utf-8') as f:
+            with open(json_file_path, 'w', encoding='utf-8') as f:
                 json.dump(interactions_data, f, ensure_ascii=False, indent=4)
+
+            with open(txt_file_path, "w", encoding="utf-8") as f:
+                f.write(evaluation_questions)
             
-            logging.info(f" -> Saved interactions data: {output_file_path}")
+            logging.info(f" -> Saved interactions data: {json_file_path}")
             logging.info(f" -> Total exported users: {len(interactions_data.keys())}\n")
 
         except Exception as e:
