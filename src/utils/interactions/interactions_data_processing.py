@@ -74,9 +74,8 @@ def semantic_depth_index(client, model, temperature, user_interaction):
     Your task is to assign a **Semantic Depth Level** from **0 (Null)** to **3 (Deep)** to the provided student question, based on the cognitive operation required to formulate it.
 
     ---
-    **SEMANTIC DEPTH SCALE (0-3):**
-    * **3 - Deep:** Transfer, inference, or metacognition. The student applies concepts to new contexts, draws conclusions, or monitors their own understanding ("How does X apply to Y?", "What would happen if X?").
-    * **2 - Intermediate:** Elaboration, paraphrasing, or simple relationships. The student seeks to understand causes, mechanisms, or alternative explanations ("Why does X happen?", "Can you explain X in a different way?").
+    **SEMANTIC DEPTH SCALE (0-2):**
+    * **2 - Deep:** Transfer, inference, or metacognition. The student applies concepts to new contexts, draws conclusions, or monitors their own understanding ("How does X apply to Y?", "What would happen if X?").
     * **1 - Superficial:** Factual questions, definitions, or localization. The student retrieves isolated information ("What is X?", "When did X happen?", "Where is X defined?").
     * **0 - Not Relevant:** Questions not relevant to learning. Off-topic, social, or technical issues unrelated to the academic content.
 
@@ -89,7 +88,7 @@ def semantic_depth_index(client, model, temperature, user_interaction):
     Return a single JSON object.
     Keys:
     - "reasoning_semantic_depth_level": A concise explanation (1-2 sentences). Step 1: Identify the cognitive operation required (recall, explanation, application, reflection). Step 2: Apply the scale to justify the level.
-    - "semantic_depth_level": The integer level (0-3).
+    - "semantic_depth_level": The integer level (0-2).
 
     Example:
     {{
