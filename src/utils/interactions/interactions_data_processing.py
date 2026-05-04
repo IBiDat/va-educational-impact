@@ -139,7 +139,7 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
                     temperature=temperature, 
                     user_interaction=interaction
                 )
-                semantic_depth_data[data_id].append(response)
+                semantic_depth_data[data_id].append(interaction | response)
                 logging.info(f"  -> [{i}/{total_interactions}] interactions processed")
         else:
             logging.warning(f"  -> No interactions found, skipping.")
