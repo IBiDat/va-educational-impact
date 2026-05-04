@@ -21,7 +21,7 @@ project_path = os.path.join(script_path, '..', '..', '..')
 sys.path.append(project_path)
 
 # Data directories
-raw_data_filename = 'interactions_raw_data_20260422_112415.json'
+raw_data_filename = 'interactions_raw_data.json'
 semantic_depth_data_filename = 'semantic_depth_data_20260504_143017.json' # 'semantic_depth_data_20260422_203030.json'
 raw_data_path = os.path.join(project_path, 'data', 'interactions', 'raw_data', raw_data_filename)
 semantic_depth_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', semantic_depth_data_filename)

@@ -23,7 +23,7 @@ project_path = os.path.join(script_path, '..', '..', '..')
 sys.path.append(project_path)
 
 # Data directories
-raw_data_filename = 'interactions_raw_data_20260422_112415.json'
+raw_data_filename = 'interactions_raw_data.json'
 raw_data_path = os.path.join(project_path, 'data', 'interactions', 'raw_data', raw_data_filename)
 output_dir = os.path.join(project_path, 'data', 'interactions', 'processed_data')
 
@@ -51,18 +51,31 @@ def main():
     """
     logging.info("▶️ STARTING SEMANTIC DEPTH INDEX GENERATION PIPELINE")
 
-    # 1. Load Raw Data
-    logging.info("STEP 1: Loading raw interactions data...\n")
+    # --- Configuration and Path Setup ---
+    output_filename = 'semantic_depth_data.json'
+    output_path = os.path.join(output_dir, output_filename)
+
+    # Check for existing output to prevent accidental overwrite
+    if os.path.exists(output_path):
+        logging.warning(f"Aborting process: Output file '{output_filename}' already exists.")
+        logging.info("Suggestion: Rename the output or delete the existing file before retrying.")
+        sys.exit(0)  # Using exit code 0 if this is an expected safety guard
+
+    # --- Step 1: Raw Data Ingestion ---
+    logging.info(f"Initiating data load from: {raw_data_filename}")
 
     try:
         with open(raw_data_path, "r", encoding="utf-8") as f:
             raw_data = json.load(f)
-        logging.info(f" -> Loaded file: {raw_data_filename}")
+        logging.info("Data successfully loaded into memory.")
 
-    except Exception as e:
-        logging.error(f"Failed to load raw data: {e}")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logging.error(f"Critical error loading raw data: {e}")
         sys.exit(1)
-
+    except Exception as e:
+        logging.error(f"Unexpected error during ingestion: {e}")
+        sys.exit(1)
+    
     # 2. Generate Semantic Depth Index
     logging.info("STEP 2: Generating semantic depth index via LLM...\n")
 
@@ -85,15 +98,11 @@ def main():
     logging.info("STEP 3: Saving semantic depth data to JSON...\n")
 
     try:
-        from datetime import datetime
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_filename = f'semantic_depth_data_{timestamp}.json'
-        output_path = os.path.join(output_dir, output_filename)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(semantic_depth_data, f, ensure_ascii=False, indent=4)
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(semantic_depth_data, f, ensure_ascii=False, indent=4)
 
-        logging.info(f" -> Saved: {output_path}\n")
+            logging.info(f" -> Saved: {output_path}\n")
 
     except Exception as e:
         logging.error(f"Failed to save semantic depth data: {e}")
