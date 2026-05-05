@@ -52,7 +52,7 @@ CENTROS = [
     ("IES Ramiro de Maeztu (Madrid)", 
         "Calle Serrano 127, 28006 Madrid, España", "1ºBACHILLERATO"),
     ("Colegio Jesús María - García Noblejas (Madrid)", 
-        "Calle Hermanos García Noblejas 68, 28037 Madrid, España", "4ºESO"),
+        "Calle Hermanos García Noblejas 68, 28037 Madrid, España", "1ºBACHILLERATO"),
     ("IES Laguna de Joatzel (Getafe)", 
         "Avenida de las Vascongadas s/n, 28903 Getafe, España", "1ºFP-MEDIO"),
 ]
