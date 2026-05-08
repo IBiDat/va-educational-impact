@@ -12,7 +12,9 @@ from typing import TypedDict
 file_path = os.path.dirname(os.path.abspath(__file__))
 directory_path = os.path.join(file_path, '..', '..', '..')
 template_path = os.path.join(directory_path, 'data', 'interactions', 'templates', 'semantic_depth_evaluation_template.md')
-summary_path = os.path.join(directory_path, 'data', 'video_transcription', 'summary_video_transcription.txt')
+summary_path = os.path.join(directory_path, 'data', 'static_content', 'processed_data', 'summary_video_transcription.txt')
+transcription_path = os.path.join(directory_path, 'data', 'static_content', 'raw_data', 'static_content_raw_data.json')
+validation_sample_path = os.path.join(directory_path, 'data', 'interactions', 'processed_data', 'validation_samples', 'semantic_depth_data_validated.json')
 #########################################################################################################################################################
 
 class SemanticDepthOutput(TypedDict):
@@ -82,9 +84,14 @@ def load_prompt():
     with open(summary_path, "r", encoding="utf-8") as f:
         video_summary = f.read()
     
+    #Load full transcription
+    with open(transcription_path, "r", encoding="utf-8") as f:
+        transcription = json.load(f)["vid_metadata_col"]["Subtitles"][0]["content"]
+    
     #Apply string formatting to the prompt template
     prompt_template = original_prompt_template.format(
         summary=video_summary,
+        #transcription=transcription,
         conversation_context="__CONVERSATION_CONTEXT__",
         user_interaction="__USER_INTERACTION__"
     )
@@ -112,7 +119,7 @@ def semantic_depth_index(client, model, temperature, prompt):
 
 #########################################################################################################################################################
 
-def generate_semantic_depth_index(client, model, temperature, raw_data):
+def generate_semantic_depth_index(client, model, temperature, raw_data, interaction_cheating_df, only_validation=False):
 
     semantic_depth_data = {}
     
@@ -120,8 +127,20 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
 
     data_ids = list(raw_data.keys())
     total_ids = len(data_ids)
+    
+    cheating_interactions = interaction_cheating_df.filter(
+        pl.col("cheating_score_llm") == 1
+    )["user_input"].to_list()
+    
+    #Load validated sample
+    with open(validation_sample_path, "r", encoding="utf-8") as f:
+        validation_sample_data = json.load(f)
+        validated_students = list(validation_sample_data.keys())
 
     for idx, data_id in enumerate(data_ids, start=1):
+        if data_id not in validated_students and only_validation:
+            continue
+
         user_interactions = raw_data[data_id]['chat_interactions']
         total_interactions = len(user_interactions)
 
@@ -130,6 +149,14 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
         if user_interactions:
             semantic_depth_data[data_id] = []
             for i, interaction in enumerate(user_interactions, start=1):
+                if interaction["user_input"] in cheating_interactions:
+                    response = {
+                        "reasoning_semantic_depth_level": "The user's question is identical to any static content question or it is directly soliciting answers to the quiz without any personal engagement with the material.",
+                        "semantic_depth_level": 1
+                    }
+                    semantic_depth_data[data_id].append(interaction | response)
+                    continue
+                
                 context = user_interactions[:i-1]
                 
                 prompt = prompt_template.replace("__CONVERSATION_CONTEXT__", str(context))
@@ -141,6 +168,7 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
                     temperature=temperature, 
                     prompt=prompt
                 )
+                
                 semantic_depth_data[data_id].append(interaction | response)
                 logging.info(f"  -> [{i}/{total_interactions}] interactions processed")
         else:

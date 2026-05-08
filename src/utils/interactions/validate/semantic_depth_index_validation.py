@@ -56,4 +56,6 @@ def compute_metrics(
     plt.title('Confusion Matrix')
     plt.savefig(os.path.join(output_dir, 'confusion_matrix.png'), bbox_inches='tight')  # Save the figure
 
-    
+    # Generate classification report
+    report = classification_report(validation_vector, semantic_depth_vector)
+    print(report)

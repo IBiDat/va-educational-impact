@@ -3,6 +3,8 @@
 # --- IMPORTS ---
 
 import os, sys
+from dotenv import load_dotenv
+load_dotenv()
 
 ###########################################################################################
 
@@ -22,6 +24,7 @@ from src.utils.interactions.cheating_score.cheating_score_generation import (
 # Data directories
 raw_data_filename = 'interactions_raw_data.json'
 raw_data_path = os.path.join(project_path, 'data', 'interactions', 'raw_data', raw_data_filename)
+template_path = os.path.join(project_path, 'data', 'interactions', 'templates', 'question_copy_detection_prompt.md')
 forms_dir = os.path.join(project_path, 'data', 'forms', 'raw_data')
 static_content_path = os.path.join(project_path, 'data', 'static_content', 'raw_data', 'static_content_raw_data.json')
 output_dir = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'cheating_score')
@@ -46,6 +49,7 @@ def main():
     #4. Compute similarity score and compute the cheating score for each conversation/user
     cheating_df, grouped_cheating_df = compute_cheating_score(
         raw_data_path=raw_data_path,
+        template_path=template_path,
         every_question=every_question
     )
     

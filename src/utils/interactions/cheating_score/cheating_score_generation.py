@@ -1,7 +1,10 @@
 import os 
 import re
 import json
+from typing import TypedDict
 
+from google import genai
+from google.genai import types
 from tqdm import tqdm
 
 import polars as pl
@@ -9,6 +12,9 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
+class CheatingLLMScoreOutput(TypedDict):
+    label: int
+    reasoning: str
 
 #########################################################################################################################################################
 
@@ -66,6 +72,8 @@ def get_static_content_questions(static_content_path: str) -> list[str]:
     multiple_choice_questions = static_content_dict["reviewed_col"]["Material"]["multiple_choice_questions"]
     for q in multiple_choice_questions:
         questions.append(q["question"])
+        answers = " ".join(q["options"])   
+        questions.append(q["question"] + answers)
     
     # Open-ended questions
     open_ended_questions = static_content_dict["reviewed_col"]["Material"]["open_ended_questions"]
@@ -81,13 +89,43 @@ def get_static_content_questions(static_content_path: str) -> list[str]:
 
 #########################################################################################################################################################
 
+def return_llm_cheating_score(
+    client: str,
+    prompt: str
+) -> dict[str, str|int]:
+    
+    #Generate model answer
+    response = client.models.generate_content(
+        model='gemini-3-flash-preview',
+        contents=prompt,
+        config=types.GenerateContentConfig(
+        temperature=0.0,
+        response_mime_type="application/json",
+        response_schema=CheatingLLMScoreOutput
+      )
+    )
+    
+    response = json.loads(response.text)
+    
+    return response
+
+#########################################################################################################################################################
+
 def compute_cheating_score(
     raw_data_path: str,
+    template_path: str,
     every_question: list[str]
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
     #Read raw_data_path
     with open(raw_data_path, "r", encoding="utf-8") as f:
         raw_data: dict[str, dict[str, list|dict]] = json.load(f)
+    
+    #Load template
+    with open(template_path, "r", encoding="utf-8") as f:
+        template = f.read()
+    
+    #Create LLM Client
+    client = genai.Client()
     
     # Load a pre-trained sentence encoder model
     model = SentenceTransformer('jaimevera1107/all-MiniLM-L6-v2-similarity-es')
@@ -115,8 +153,17 @@ def compute_cheating_score(
                 most_similar_question = every_question[max_index]
                 
                 #Compute cheating score: Similarity > 0.85
-                cheating_score = 0
-                if max_similarity > 0.85: cheating_score = 1
+                cheating_score_encoder = 0
+                if max_similarity > 0.85: cheating_score_encoder = 1
+                
+                #Get LLM Cheating Score
+                llm_answer = return_llm_cheating_score(
+                    client=client,
+                    prompt=template.format(
+                        QUESTION_LIST=every_question,
+                        USER_INTERACTION=user_input
+                    )
+                )
 
                 cheating_data.append([
                     f"{user}_{i}",
@@ -124,7 +171,9 @@ def compute_cheating_score(
                     user_input,
                     most_similar_question,
                     max_similarity,
-                    cheating_score
+                    cheating_score_encoder,
+                    llm_answer["label"],
+                    llm_answer["reasoning"]
                 ])
     
     #Create cheating df
@@ -136,7 +185,9 @@ def compute_cheating_score(
             "user_input": pl.String,
             "most_similar_question": pl.String,
             "similarity_score": pl.Float64,
-            "cheating_score": pl.UInt64
+            "cheating_score_encoder": pl.UInt64,
+            "cheating_score_llm": pl.UInt64,
+            "reasoning_llm": pl.String
         },
         orient="row"
     )
@@ -144,11 +195,13 @@ def compute_cheating_score(
     #Group results by users
     grouped_cheating_df = cheating_df.select(
         "id",
-        "cheating_score"
+        "cheating_score_encoder",
+        "cheating_score_llm"
     ).group_by(
         "id"
     ).agg(
-        cheating_score = pl.col("cheating_score").sum()/pl.col("id").len()
+        cheating_score_encoder = pl.col("cheating_score_encoder").sum()/pl.col("id").len(),
+        cheating_score_llm = pl.col("cheating_score_llm").sum()/pl.col("id").len()
     )
     
     return cheating_df, grouped_cheating_df

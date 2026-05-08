@@ -14,7 +14,7 @@ project_path = os.path.join(script_path, '..', '..', '..', '..')
 sys.path.append(project_path)
 
 # Data directories
-semantic_depth_filename = 'semantic_depth_data_ORIGINAL.json'
+semantic_depth_filename = 'semantic_depth_data.json'
 validation_sample = 'semantic_depth_data_validated.json'
 semantic_depth_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', semantic_depth_filename)
 validation_sample_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'validation_samples', validation_sample)
