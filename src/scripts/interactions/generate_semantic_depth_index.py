@@ -3,6 +3,8 @@
 # --- IMPORTS ---
 
 import os, sys, json, logging
+
+import polars as pl
 from google import genai
 from dotenv import load_dotenv
 load_dotenv()
@@ -25,6 +27,8 @@ sys.path.append(project_path)
 # Data directories
 raw_data_filename = 'interactions_raw_data.json'
 raw_data_path = os.path.join(project_path, 'data', 'interactions', 'raw_data', raw_data_filename)
+interaction_cheating_score_filename = 'interaction_cheating_score.parquet'
+interaction_cheating_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'cheating_score', interaction_cheating_score_filename)
 output_dir = os.path.join(project_path, 'data', 'interactions', 'processed_data')
 
 ###########################################################################################
@@ -76,6 +80,18 @@ def main():
         logging.error(f"Unexpected error during ingestion: {e}")
         sys.exit(1)
     
+    # --- Step 2: Cheating DF Ingestion ---
+    logging.info(f"Initiating data load from: {interaction_cheating_score_filename}")
+
+    try:
+        interaction_cheating_df = pl.read_parquet(
+            interaction_cheating_path
+        )
+        logging.info("Data successfully loaded into memory.")
+    except Exception as e:
+        logging.error(f"Unexpected error during ingestion: {e}")
+        sys.exit(1)
+    
     # 2. Generate Semantic Depth Index
     logging.info("STEP 2: Generating semantic depth index via LLM...\n")
 
@@ -86,7 +102,9 @@ def main():
             client = client,
             model = MODEL,
             temperature = TEMPERATURE,
-            raw_data = raw_data
+            raw_data = raw_data,
+            interaction_cheating_df = interaction_cheating_df,
+            only_validation=False
         )
         logging.info(f" -> Semantic depth index generated for {len(semantic_depth_data)} participants\n")
 

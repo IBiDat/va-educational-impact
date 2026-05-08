@@ -8,6 +8,15 @@ import polars as pl
 from google.genai import types
 from typing import TypedDict
 
+#########################################################################################################################################################
+file_path = os.path.dirname(os.path.abspath(__file__))
+directory_path = os.path.join(file_path, '..', '..', '..')
+template_path = os.path.join(directory_path, 'data', 'interactions', 'templates', 'semantic_depth_evaluation_template.md')
+summary_path = os.path.join(directory_path, 'data', 'static_content', 'processed_data', 'summary_video_transcription.txt')
+transcription_path = os.path.join(directory_path, 'data', 'static_content', 'raw_data', 'static_content_raw_data.json')
+validation_sample_path = os.path.join(directory_path, 'data', 'interactions', 'processed_data', 'validation_samples', 'semantic_depth_data_validated.json')
+#########################################################################################################################################################
+
 class SemanticDepthOutput(TypedDict):
     reasoning_semantic_depth_level: str
     semantic_depth_level: int
@@ -66,39 +75,33 @@ def process_interactions_data(raw_data):
 
 #########################################################################################################################################################
 
-def semantic_depth_index(client, model, temperature, user_interaction):
+def load_prompt():
+    #Load prompt template
+    with open(template_path, "r", encoding="utf-8") as f:
+        original_prompt_template = f.read()
+    
+    #Load video transcription summary
+    with open(summary_path, "r", encoding="utf-8") as f:
+        video_summary = f.read()
+    
+    #Load full transcription
+    with open(transcription_path, "r", encoding="utf-8") as f:
+        transcription = json.load(f)["vid_metadata_col"]["Subtitles"][0]["content"]
+    
+    #Apply string formatting to the prompt template
+    prompt_template = original_prompt_template.format(
+        summary=video_summary,
+        #transcription=transcription,
+        conversation_context="__CONVERSATION_CONTEXT__",
+        user_interaction="__USER_INTERACTION__"
+    )
+    
+    return prompt_template
 
-    prompt = f"""
-    You are an expert educational interaction analyst specializing in Self-Regulated Learning (SRL) and learning analytics.
 
-    Your task is to assign a **Semantic Depth Level** from **0 (Null)** to **3 (Deep)** to the provided student question, based on the cognitive operation required to formulate it.
+#########################################################################################################################################################
 
-    ---
-    **SEMANTIC DEPTH SCALE (0-2):**
-    * **2 - Deep:** Transfer, inference, or metacognition. The student applies concepts to new contexts, draws conclusions, or monitors their own understanding ("How does X apply to Y?", "What would happen if X?").
-    * **1 - Superficial:** Factual questions, definitions, or localization. The student retrieves isolated information ("What is X?", "When did X happen?", "Where is X defined?").
-    * **0 - Not Relevant:** Questions not relevant to learning. Off-topic, social, or technical issues unrelated to the academic content.
-
-    ---
-    **THEORETICAL FRAMEWORK:**
-    This scale is grounded in Zimmerman (2000) and Pintrich (2000) Self-Regulated Learning models, and operationalized through the Anderson & Krathwohl (2001) revised cognitive taxonomy.
-
-    ---
-    **OUTPUT FORMAT:**
-    Return a single JSON object.
-    Keys:
-    - "reasoning_semantic_depth_level": A concise explanation (1-2 sentences). Step 1: Identify the cognitive operation required (recall, explanation, application, reflection). Step 2: Apply the scale to justify the level.
-    - "semantic_depth_level": The integer level (0-2).
-
-    Example:
-    {{
-      "reasoning_semantic_depth_level": "The student asks how a statistical concept applies to a real-world scenario, requiring transfer and inference beyond mere recall.",
-      "semantic_depth_level": 3
-    }}
-
-    **USER INTERACTION TO CLASSIFY:**
-    {user_interaction}
-    """
+def semantic_depth_index(client, model, temperature, prompt):
 
     response = client.models.generate_content(
         model=model,
@@ -116,14 +119,28 @@ def semantic_depth_index(client, model, temperature, user_interaction):
 
 #########################################################################################################################################################
 
-def generate_semantic_depth_index(client, model, temperature, raw_data):
+def generate_semantic_depth_index(client, model, temperature, raw_data, interaction_cheating_df, only_validation=False):
 
     semantic_depth_data = {}
+    
+    prompt_template = load_prompt()
 
     data_ids = list(raw_data.keys())
     total_ids = len(data_ids)
+    
+    cheating_interactions = interaction_cheating_df.filter(
+        pl.col("cheating_score_llm") == 1
+    )["user_input"].to_list()
+    
+    #Load validated sample
+    with open(validation_sample_path, "r", encoding="utf-8") as f:
+        validation_sample_data = json.load(f)
+        validated_students = list(validation_sample_data.keys())
 
     for idx, data_id in enumerate(data_ids, start=1):
+        if data_id not in validated_students and only_validation:
+            continue
+
         user_interactions = raw_data[data_id]['chat_interactions']
         total_interactions = len(user_interactions)
 
@@ -132,12 +149,26 @@ def generate_semantic_depth_index(client, model, temperature, raw_data):
         if user_interactions:
             semantic_depth_data[data_id] = []
             for i, interaction in enumerate(user_interactions, start=1):
+                if interaction["user_input"] in cheating_interactions:
+                    response = {
+                        "reasoning_semantic_depth_level": "The user's question is identical to any static content question or it is directly soliciting answers to the quiz without any personal engagement with the material.",
+                        "semantic_depth_level": 1
+                    }
+                    semantic_depth_data[data_id].append(interaction | response)
+                    continue
+                
+                context = user_interactions[:i-1]
+                
+                prompt = prompt_template.replace("__CONVERSATION_CONTEXT__", str(context))
+                prompt = prompt.replace("__USER_INTERACTION__", str(interaction))
+                
                 response = semantic_depth_index(
                     client=client, 
                     model=model, 
                     temperature=temperature, 
-                    user_interaction=interaction
+                    prompt=prompt
                 )
+                
                 semantic_depth_data[data_id].append(interaction | response)
                 logging.info(f"  -> [{i}/{total_interactions}] interactions processed")
         else:
