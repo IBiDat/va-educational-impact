@@ -97,6 +97,7 @@ def main():
 
                 if i_type == 'chat_interaction':
                     chat_entry = {
+                        'timestamp': str(interaction.get('timestamp', '')),
                         'user_input': interaction.get('user_input', ''),
                         'model_response': interaction.get('model_response', '')
                     }
@@ -108,6 +109,7 @@ def main():
                         evaluation_questions = interaction.get('evaluation_questions', '')
                     
                     eval_entry = {
+                        'timestamp': str(interaction.get('timestamp', '')),
                         'user-answers': interaction.get('user_answers', ''), 
                         'pass': interaction['evaluation_result'].get('pass', '')
                     }

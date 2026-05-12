@@ -7,6 +7,7 @@ import re
 import polars as pl
 from google.genai import types
 from typing import TypedDict
+from datetime import datetime
 
 #########################################################################################################################################################
 
@@ -27,29 +28,51 @@ class SemanticDepthOutput(TypedDict):
 
 def process_interactions_data(raw_data):
 
-    evaluation_answers, evaluation_pass = [], []
+    def _get_timestamps(data_id: dict) -> tuple[datetime | None, datetime | None]:
+        """Extrae el timestamp de evaluación y el máximo de chat para un id."""
+        eval_ts = (
+            datetime.fromisoformat(data_id['evaluation_interactions']['timestamp'])
+            if data_id['evaluation_interactions']
+            else None
+        )
+        chat_ts = (
+            max(datetime.fromisoformat(i['timestamp']) for i in data_id['chat_interactions'])
+            if data_id['chat_interactions']
+            else None
+        )
+        return eval_ts, chat_ts
 
-    data_ids = list(raw_data.keys())
 
-    for data_id in data_ids:
-        if raw_data[data_id]['evaluation_interactions']:
-            evaluation_interactions = raw_data[data_id]['evaluation_interactions']['user-answers']
-            evaluation_pass.append(raw_data[data_id]['evaluation_interactions']['pass'])
-            evaluation_answers.append(re.findall(r'Respuesta:\s*(.+?)(?=\n\nANSWER|\Z)', evaluation_interactions, re.DOTALL))
+    rows = []
+
+    for data_id, data in raw_data.items():
+
+        eval_interactions = data['evaluation_interactions']
+        eval_ts, chat_ts = _get_timestamps(data)
+
+        if eval_interactions:
+            answers = re.findall(
+                r'Respuesta:\s*(.+?)(?=\n\nANSWER|\Z)',
+                eval_interactions['user-answers'],
+                re.DOTALL
+            )
+            eval_pass = eval_interactions['pass']
         else:
-            evaluation_answers.append([])
-            evaluation_pass.append(None)
-            
-    evaluation_answers_counts = [len(x) for x in evaluation_answers]
+            answers  = []
+            eval_pass = None
 
-    chat_interactions_counts = [len(raw_data[data_id]['chat_interactions']) for data_id in data_ids]
+        valid_timestamps = [ts for ts in (eval_ts, chat_ts) if ts is not None]
+        final_ts = max(valid_timestamps) if valid_timestamps else None
 
-    interactions_data = pl.DataFrame({
-        'id': data_ids, 
-        'chat_interactions_counts': chat_interactions_counts,
-        'evaluation_answers_counts': evaluation_answers_counts,
-        'evaluation_pass': evaluation_pass
-    })
+        rows.append({
+            'id':                       data_id,
+            'chat_interactions_counts': len(data['chat_interactions']),
+            'evaluation_answers_counts': len(answers),
+            'evaluation_pass':          eval_pass,
+            'final_timestamp':          final_ts,
+        })
+
+    interactions_data = pl.DataFrame(rows)
 
     interactions_data = interactions_data.with_columns(
         consultive_chat_used = pl.col('chat_interactions_counts') > 0,

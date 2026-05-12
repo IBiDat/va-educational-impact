@@ -28,10 +28,22 @@ forms_data_path = os.path.join(project_path, 'data', 'forms', 'processed_data', 
 interactions_data_filename = 'interactions_processed_data.parquet'
 interactions_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', interactions_data_filename)
 
+centros_data_filename = 'centros_data.csv'
+centros_data_path = os.path.join(project_path, 'data', 'centros', centros_data_filename)
+
 # Output data directories
 output_filename = 'processed_forms_interactions_data.parquet'
 output_dir = os.path.join(project_path, 'data', 'combined')
 output_path = os.path.join(output_dir, output_filename)
+
+###########################################################################################
+
+CENTROS_IDS_MAP = {
+    "IES Ramiro de Maeztu (Madrid)":                  "RamiroMaeztu",
+    "IES Laguna de Joatzel (Getafe)":                 "Laguna",
+    "Colegio Jesús María - García Noblejas (Madrid)": "JesusMaria",
+    "IES José García Nieto (Las Rozas)":              "GarciaNieto",
+}
 
 ###########################################################################################
 
@@ -44,7 +56,7 @@ def segment_groups(forms_interactions_df):
             .otherwise(pl.col('grupo'))
             .alias(f'grupo_segmented_{version}')
         )
-        
+
     return forms_interactions_df
 
 ###########################################################################################
@@ -54,8 +66,9 @@ def segment_groups(forms_interactions_df):
 def main():
     """
     Main execution flow for Combined Forms and Interactions Data.
-    Filters form metrics, joins with interactions data, segments the experimental 
-    groups, and saves the final processed dataset as Parquet.
+    Filters form metrics, joins with interactions data, segments the experimental
+    groups, enriches with centro socioeconomic data, and saves the final processed
+    dataset as Parquet.
     """
     logging.info("▶️ STARTING COMBINED DATA PROCESSING PIPELINE")
 
@@ -67,7 +80,10 @@ def main():
         logging.info(f" -> Loaded file: {forms_data_filename}")
 
         interactions_df = pl.read_parquet(interactions_data_path)
-        logging.info(f" -> Loaded file: {interactions_data_filename}\n")
+        logging.info(f" -> Loaded file: {interactions_data_filename}")
+
+        centros_df = pl.read_csv(centros_data_path)
+        logging.info(f" -> Loaded file: {centros_data_filename}\n")
 
     except Exception as e:
         logging.error(f"Failed to load data: {e}")
@@ -80,39 +96,41 @@ def main():
         base_cols = ['id', 'centro', 'grupo']
 
         metrics_pre_post = [
-            'puntuacion_tc', 
-            'puntuacion_ta', 
-            'puntuacion_tc_retencion', 
+            'puntuacion_tc',
+            'puntuacion_ta',
+            'puntuacion_tc_retencion',
             'puntuacion_tc_transferencia'
         ]
 
         metrics_post = [
-            'puntuacion_tcc_rel_post', 
-            'puntuacion_tcc_int_post', 
-            'puntuacion_tcc_ext_post', 
-            'puntuacion_tcc_rel_cat_post', 
-            'puntuacion_tcc_int_cat_post', 
-            'puntuacion_tcc_ext_cat_post', 
+            'puntuacion_tcc_rel_post',
+            'puntuacion_tcc_int_post',
+            'puntuacion_tcc_ext_post',
+            'puntuacion_tcc_rel_cat_post',
+            'puntuacion_tcc_int_cat_post',
+            'puntuacion_tcc_ext_cat_post',
         ]
 
-        hake_metrics = [
-            'puntuacion_tc_hake_gain', 
-            'puntuacion_tc_retencion_hake_gain', 
+        extra_metrics = [
+            'puntuacion_tc_hake_gain',
+            'puntuacion_tc_retencion_hake_gain',
             'puntuacion_tc_transferencia_hake_gain',
             'puntuacion_tc_hake_gain_cat',
             'puntuacion_tc_retencion_hake_gain_cat',
             'puntuacion_tc_transferencia_hake_gain_cat',
             'mejora',
             'puntuacion_tc_cat_trad_scale_pre',
-            'puntuacion_tc_cat_trad_scale_post'
+            'puntuacion_tc_cat_trad_scale_post',
+            'marca temporal_pre',
+            'marca temporal_post'
         ]
 
-        forms_cols_analysis = base_cols + hake_metrics + [
+        forms_cols_analysis = base_cols + extra_metrics + [
             f"{metric}{cat_suffix}_{period}"
             for period in ['pre', 'post']
             for cat_suffix in ['', '_cat']
             for metric in metrics_pre_post
-        ] + metrics_post 
+        ] + metrics_post
 
         forms_df = forms_df.select(forms_cols_analysis)
         logging.info(f" -> Forms columns filtered successfully. Total columns: {len(forms_cols_analysis)}\n")
@@ -121,16 +139,16 @@ def main():
         logging.error(f"Error during column filtering: {e}")
         sys.exit(1)
 
-    # 3. Join Dataframes
+    # 3. Join Forms and Interactions
     logging.info("STEP 3: Joining forms and interactions dataframe...\n")
 
     try:
         forms_interactions_df = forms_df.join(
-            interactions_df, 
-            how='left', 
+            interactions_df,
+            how='left',
             on='id'
         )
-        logging.info(f" -> Join completed successfully\n")
+        logging.info(" -> Join completed successfully\n")
 
     except Exception as e:
         logging.error(f"Error during dataframe join: {e}")
@@ -140,17 +158,33 @@ def main():
     logging.info("STEP 4: Segmenting groups...\n")
 
     try:
-
         forms_interactions_df = segment_groups(forms_interactions_df)
-
         logging.info(" -> Experimental segmentation variables created successfully\n")
 
     except Exception as e:
         logging.error(f"Error during data segmentation: {e}")
         sys.exit(1)
 
-    # 5. Save Outputs
-    logging.info("STEP 5: Saving results to Parquet...\n")
+    # 5. Enrich with Centro Socioeconomic Data
+    logging.info("STEP 5: Enriching with centro socioeconomic data...\n")
+
+    try:
+        centros_df = centros_df.with_columns(
+            pl.col("nombre").replace(CENTROS_IDS_MAP).alias('centro')
+        )
+        forms_interactions_df = forms_interactions_df.join(
+            centros_df,
+            how='left',
+            on='centro'
+        )
+        logging.info(" -> Centro data joined successfully\n")
+
+    except Exception as e:
+        logging.error(f"Error during centro data enrichment: {e}")
+        sys.exit(1)
+
+    # 6. Save Outputs
+    logging.info("STEP 6: Saving results to Parquet...\n")
 
     try:
         os.makedirs(output_dir, exist_ok=True)
