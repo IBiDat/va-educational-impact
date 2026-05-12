@@ -198,7 +198,7 @@ def categorize_high_quality(wsdi: float) -> str:
         return False
     
 #########################################################################################################################################################
-
+'''
 def process_semantic_depth_data(semantic_depth_data):
 
     rows = [
@@ -230,6 +230,63 @@ def process_semantic_depth_data(semantic_depth_data):
         )
         .sort('id')
     )
+
+    return semantic_depth_df, wsdi_df
+'''
+def process_semantic_depth_data(semantic_depth_data):
+
+    rows = [
+        {'id': id_, 'semantic_depth_level': q['semantic_depth_level']}
+        for id_, questions in semantic_depth_data.items()
+        for q in questions
+    ]
+
+    semantic_depth_df = pl.DataFrame(rows)
+
+    # Niveles presentes en los datos
+    levels = sorted(semantic_depth_df['semantic_depth_level'].unique().to_list())
+
+    wsdi_df = (
+        semantic_depth_df
+        # Paso 1: contar nij (preguntas por alumno y nivel)
+        .group_by(['id', 'semantic_depth_level'])
+        .agg(pl.len().alias('n_ij'))
+        # Paso 2: calcular wj * nij
+        .with_columns(
+            (pl.col('semantic_depth_level') * pl.col('n_ij')).alias('w_x_n')
+        )
+        # Paso 3: agregar por alumno → Σ(wj * nij) y N_total
+        .group_by('id')
+        .agg([
+            pl.col('w_x_n').sum().alias('weighted_sum'),
+            pl.col('n_ij').sum().alias('N_total')
+        ])
+        # Paso 4: calcular WSDI
+        .with_columns(
+            (pl.col('weighted_sum') / pl.col('N_total')).alias('WSDI')
+        )
+        .sort('id')
+    )
+
+    # Paso 5: pivot → count_level_X por alumno, luego join a wsdi_df
+    rename_map = {
+        '0': 'count_out_of_context',
+        '1': 'count_cheating',
+        '2': 'count_superficial',
+        '3': 'count_deep'
+     }
+
+    count_df = (
+        semantic_depth_df
+        .group_by(['id', 'semantic_depth_level'])
+        .agg(pl.len().alias('n_ij'))
+        .pivot(on='semantic_depth_level', index='id', values='n_ij', aggregate_function='first')
+        .rename(rename_map)
+        .fill_null(0)
+        .sort('id')
+    )
+
+    wsdi_df = wsdi_df.join(count_df, on='id', how='left')
 
     return semantic_depth_df, wsdi_df
 
