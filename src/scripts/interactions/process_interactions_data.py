@@ -22,9 +22,11 @@ sys.path.append(project_path)
 
 # Data directories
 raw_data_filename = 'interactions_raw_data.json'
-semantic_depth_data_filename = 'semantic_depth_data_20260504_143017.json' # 'semantic_depth_data_20260422_203030.json'
+semantic_depth_data_filename = 'semantic_depth_data.json' 
 raw_data_path = os.path.join(project_path, 'data', 'interactions', 'raw_data', raw_data_filename)
 semantic_depth_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', semantic_depth_data_filename)
+cheating_data_filename = 'id_cheating_score.parquet'
+cheating_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'cheating_score', cheating_data_filename)
 output_dir = os.path.join(project_path, 'data', 'interactions', 'processed_data')
 
 ###########################################################################################
@@ -34,7 +36,7 @@ output_dir = os.path.join(project_path, 'data', 'interactions', 'processed_data'
 from src.utils.interactions.interactions_data_processing import (
     process_interactions_data,
     process_semantic_depth_data,
-    process_combined_interactions_data,
+    add_wsdi_cheating_score,
     segment_experimental_type
 )
 
@@ -72,22 +74,19 @@ def main():
         interactions_df = process_interactions_data(raw_data)
         logging.info(f" -> Interactions processed: {interactions_df.shape[0]} records")
 
-        semantic_depth_df, weighted_semantic_depth_df = process_semantic_depth_data(semantic_depth_data)
-        logging.info(f" -> WSDI computed: {weighted_semantic_depth_df.shape[0]} participants\n")
+        semantic_depth_df, wsdi_df = process_semantic_depth_data(semantic_depth_data)
+        logging.info(f" -> WSDI computed: {wsdi_df.shape[0]} participants\n")
 
     except Exception as e:
         logging.error(f"Error during data processing: {e}")
         sys.exit(1)
 
     # 3. Join WSDI to Interactions
-    logging.info("STEP 3: Joining WSDI to interactions dataframe...\n")
+    logging.info("STEP 3: Adding WSDI and Cheating Score to interactions dataframe...\n")
 
     try:
-        interactions_df = interactions_df.join(
-            weighted_semantic_depth_df[['id', 'WSDI', 'WSDI_cat']],
-            how='left',
-            on='id'
-        )
+        cheating_df = pl.read_parquet(cheating_data_path)
+        interactions_df = add_wsdi_cheating_score(wsdi_df, cheating_df, interactions_df)
         logging.info(f" -> Join completed successfully\n")
 
     except Exception as e:
@@ -96,9 +95,8 @@ def main():
 
 
     # 4. Process Combined Interactions Data
-    logging.info("STEP 4: Processing combined interactions data...\n")
+    logging.info("STEP 4: Segmenting Experimental Group...\n")
 
-    interactions_df = process_combined_interactions_data(interactions_df)
     interactions_df = segment_experimental_type(interactions_df)
 
     # 5. Save Outputs
@@ -106,7 +104,7 @@ def main():
 
     output_files = {
         'semantic_depth.parquet': semantic_depth_df,
-        'weighted_semantic_depth.parquet': weighted_semantic_depth_df,
+        'weighted_semantic_depth.parquet': wsdi_df,
         'interactions_processed_data.parquet': interactions_df,
     }
 

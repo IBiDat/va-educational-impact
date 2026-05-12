@@ -9,12 +9,14 @@ from google.genai import types
 from typing import TypedDict
 
 #########################################################################################################################################################
+
 file_path = os.path.dirname(os.path.abspath(__file__))
 directory_path = os.path.join(file_path, '..', '..', '..')
 template_path = os.path.join(directory_path, 'data', 'interactions', 'templates', 'semantic_depth_evaluation_template.md')
 summary_path = os.path.join(directory_path, 'data', 'static_content', 'processed_data', 'summary_video_transcription.txt')
 transcription_path = os.path.join(directory_path, 'data', 'static_content', 'raw_data', 'static_content_raw_data.json')
 validation_sample_path = os.path.join(directory_path, 'data', 'interactions', 'processed_data', 'validation_samples', 'semantic_depth_data_validated.json')
+
 #########################################################################################################################################################
 
 class SemanticDepthOutput(TypedDict):
@@ -71,6 +73,7 @@ def process_interactions_data(raw_data):
         )
         .alias("chat_freq_use_v2")
     )
+
     return interactions_data
 
 #########################################################################################################################################################
@@ -179,15 +182,21 @@ def generate_semantic_depth_index(client, model, temperature, raw_data, interact
 #########################################################################################################################################################
 
 def categorize_wsdi(wsdi: float) -> str:
-    if wsdi <= 0.5:
-        return "Irrelevante" # < 0.5
-    elif wsdi < 2:
-        return "Superficial" # [0.5, 2)
-    elif wsdi < 2.5:
-        return "Intermedia" # [2, 2.5)
+    if wsdi <= 1.4:
+        return "Irrelevante" # <= 1.4
+    elif wsdi <= 2.2:
+        return "Superficial" # (1.4, 2.2]
     else:
-        return "Profunda" # >= 2.5
+        return "Profunda" # > 2.2
 
+#########################################################################################################################################################
+
+def categorize_high_quality(wsdi: float) -> str:
+    if wsdi >= 1.8:
+        return True  
+    else:
+        return False
+    
 #########################################################################################################################################################
 
 def process_semantic_depth_data(semantic_depth_data):
@@ -200,7 +209,7 @@ def process_semantic_depth_data(semantic_depth_data):
 
     semantic_depth_df = pl.DataFrame(rows)
 
-    weighted_semantic_depth_df = (
+    wsdi_df = (
         semantic_depth_df
         # Paso 1: contar nij (preguntas por alumno y nivel)
         .group_by(['id', 'semantic_depth_level'])
@@ -222,28 +231,39 @@ def process_semantic_depth_data(semantic_depth_data):
         .sort('id')
     )
 
-    weighted_semantic_depth_df = weighted_semantic_depth_df.with_columns(
-        pl.col("WSDI").map_elements(categorize_wsdi, return_dtype=pl.String).alias("WSDI_cat")
-    )
-
-    return semantic_depth_df, weighted_semantic_depth_df
+    return semantic_depth_df, wsdi_df
 
 #########################################################################################################################################################
 
-def process_combined_interactions_data(interactions_df):
+def add_wsdi_cheating_score(wsdi_df, cheating_df, interactions_df):
 
-    interactions_df = interactions_df.with_columns(
-            pl.when(pl.col('WSDI_cat').is_null()).
-            then(pl.col('chat_freq_use')).
-            otherwise(pl.col('WSDI_cat')).
-            alias('WSDI_cat')
-        ).with_columns(
-            pl.when(pl.col('WSDI_cat').is_in(['Intermedia', 'Profunda'])).then(True)
-            .when(pl.col('WSDI_cat') == 'No Usado').then(pl.col('WSDI_cat'))
-            .otherwise(False)
-            .alias('high_quality_use')
-        )
-    
+    interactions_df = interactions_df.join(
+        wsdi_df[['id', 'WSDI']],
+        how='left',
+        on='id'
+    ).with_columns(
+        pl.col("WSDI").map_elements(
+            categorize_wsdi, 
+            return_dtype=pl.String
+        ).alias("WSDI_cat")
+    ).with_columns(
+        pl.col("WSDI").map_elements(
+            categorize_high_quality, 
+            return_dtype=pl.Boolean
+        ).alias("high_quality_use")
+    ).with_columns(
+        pl.when(pl.col('WSDI_cat').is_null()).
+        then(pl.col('chat_freq_use')).
+        otherwise(pl.col('WSDI_cat')).
+        alias('WSDI_cat')
+    )
+
+    interactions_df = interactions_df.join(
+        cheating_df.select(['id', 'cheating_score_llm']), 
+        how='left', 
+        on='id'
+    )
+
     return interactions_df
 
 #########################################################################################################################################################
