@@ -232,9 +232,6 @@ def process_semantic_depth_data(semantic_depth_data):
 
     semantic_depth_df = pl.DataFrame(rows)
 
-    # Niveles presentes en los datos
-    levels = sorted(semantic_depth_df['semantic_depth_level'].unique().to_list())
-
     wsdi_df = (
         semantic_depth_df
         # Paso 1: contar nij (preguntas por alumno y nivel)

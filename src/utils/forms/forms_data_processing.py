@@ -115,8 +115,10 @@ def get_exprs_tcc_ext(cols_tcc):
 def add_categorization(df):
     # Definimos las columnas que queremos categorizar
     cols_to_categorize = [
-        'puntuacion_tc', 'puntuacion_ta', 
-        'puntuacion_tc_retencion', 'puntuacion_tc_transferencia'
+        'puntuacion_tc', 
+        'puntuacion_ta', 
+        'puntuacion_tc_retencion', 
+        'puntuacion_tc_transferencia'
     ]
     
     # Añadimos las de carga cognitiva (estas existen en el pre-test como Null, y en el post-test con datos)
@@ -146,7 +148,6 @@ def add_categorization(df):
             .otherwise(pl.lit("Alta"))
             .alias(f"{col}_cat")
         )
-
 
     df = df.with_columns(
         pl.when(pl.col('puntuacion_tc') < 0.5).then(pl.lit('suspenso'))
