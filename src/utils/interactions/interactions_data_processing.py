@@ -221,41 +221,7 @@ def categorize_high_quality(wsdi: float) -> str:
         return False
     
 #########################################################################################################################################################
-'''
-def process_semantic_depth_data(semantic_depth_data):
 
-    rows = [
-        {'id': id_, 'semantic_depth_level': q['semantic_depth_level']}
-        for id_, questions in semantic_depth_data.items()
-        for q in questions
-    ]
-
-    semantic_depth_df = pl.DataFrame(rows)
-
-    wsdi_df = (
-        semantic_depth_df
-        # Paso 1: contar nij (preguntas por alumno y nivel)
-        .group_by(['id', 'semantic_depth_level'])
-        .agg(pl.len().alias('n_ij'))
-        # Paso 2: calcular wj * nij
-        .with_columns(
-            (pl.col('semantic_depth_level') * pl.col('n_ij')).alias('w_x_n')
-        )
-        # Paso 3: agregar por alumno → Σ(wj * nij) y N_total
-        .group_by('id')
-        .agg([
-            pl.col('w_x_n').sum().alias('weighted_sum'),
-            pl.col('n_ij').sum().alias('N_total')
-        ])
-        # Paso 4: calcular WSDI
-        .with_columns(
-            (pl.col('weighted_sum') / pl.col('N_total')).alias('WSDI')
-        )
-        .sort('id')
-    )
-
-    return semantic_depth_df, wsdi_df
-'''
 def process_semantic_depth_data(semantic_depth_data):
 
     rows = [
