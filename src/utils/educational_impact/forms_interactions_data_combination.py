@@ -66,7 +66,7 @@ def compute_time_interval_variables(
     
     #Join DFs
     combined_df = combined_df.join(
-        filtered_df,
+        filtered_df.select(['id', 'pre_post_time_interval']),
         on="id",
         how="inner"
     )
