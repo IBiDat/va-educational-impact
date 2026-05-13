@@ -69,7 +69,7 @@ def process_interactions_data(raw_data):
             'chat_interactions_counts': len(data['chat_interactions']),
             'evaluation_answers_counts': len(answers),
             'evaluation_pass':          eval_pass,
-            'final_timestamp':          final_ts,
+            'final_timestamp_interactions':          final_ts,
         })
 
     interactions_data = pl.DataFrame(rows)
