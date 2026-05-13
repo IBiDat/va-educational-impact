@@ -20,6 +20,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 # Base paths
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..', '..', '..')
+sys.path.append(project_path)
 
 # Input data directories
 forms_data_filename = 'processed_pre_post_forms.parquet'
@@ -36,6 +37,16 @@ output_filename = 'processed_forms_interactions_data.parquet'
 output_dir = os.path.join(project_path, 'data', 'combined')
 output_path = os.path.join(output_dir, output_filename)
 
+
+###########################################################################################
+
+# --- LOCAL IMPORTS ---
+
+from src.utils.educational_impact.forms_interactions_data_combination import (
+    segment_groups,
+    compute_time_interval_variables
+)
+
 ###########################################################################################
 
 CENTROS_IDS_MAP = {
@@ -44,20 +55,6 @@ CENTROS_IDS_MAP = {
     "Colegio Jesús María - García Noblejas (Madrid)": "JesusMaria",
     "IES José García Nieto (Las Rozas)":              "GarciaNieto",
 }
-
-###########################################################################################
-
-def segment_groups(forms_interactions_df):
-
-    for version in ['v1', 'v2', 'v3', 'v4']:
-        forms_interactions_df = forms_interactions_df.with_columns(
-            pl.when(pl.col('grupo') == 'experimental')
-            .then(pl.col(f'experimental_type_freq_quality_{version}'))
-            .otherwise(pl.col('grupo'))
-            .alias(f'grupo_segmented_{version}')
-        )
-
-    return forms_interactions_df
 
 ###########################################################################################
 
@@ -164,9 +161,22 @@ def main():
     except Exception as e:
         logging.error(f"Error during data segmentation: {e}")
         sys.exit(1)
+    
+    # 5. Include compute time interval variables
+    logging.info("STEP 5: Include forms time interval variables ...\n")
 
-    # 5. Enrich with Centro Socioeconomic Data
-    logging.info("STEP 5: Enriching with centro socioeconomic data...\n")
+    try:
+        forms_interactions_df = compute_time_interval_variables(
+            combined_df=forms_interactions_df
+        )
+        logging.info(" -> Forms Time Interval joined successfully\n")
+
+    except Exception as e:
+        logging.error(f"Error during forms time interval computation: {e}")
+        sys.exit(1)
+
+    # 6. Enrich with Centro Socioeconomic Data
+    logging.info("STEP 6: Enriching with centro socioeconomic data...\n")
 
     try:
         centros_df = centros_df.with_columns(
@@ -183,8 +193,8 @@ def main():
         logging.error(f"Error during centro data enrichment: {e}")
         sys.exit(1)
 
-    # 6. Save Outputs
-    logging.info("STEP 6: Saving results to Parquet...\n")
+    # 7. Save Outputs
+    logging.info("STEP 7: Saving results to Parquet...\n")
 
     try:
         os.makedirs(output_dir, exist_ok=True)
