@@ -7,6 +7,8 @@ import re
 import polars as pl
 from google.genai import types
 from typing import TypedDict
+
+import statistics
 from datetime import datetime
 
 #########################################################################################################################################################
@@ -28,20 +30,62 @@ class SemanticDepthOutput(TypedDict):
 
 def process_interactions_data(raw_data):
 
-    def _get_timestamps(data_id: dict) -> tuple[datetime | None, datetime | None]:
-        """Extrae el timestamp de evaluación y el máximo de chat para un id."""
+    def _get_timestamps(data_id: dict) -> tuple[datetime | None, list[datetime]| None]:
+        """Extrae el timestamp de evaluación y todos los timestamps del chat para un id."""
         eval_ts = (
             datetime.fromisoformat(data_id['evaluation_interactions']['timestamp'])
             if data_id['evaluation_interactions']
             else None
         )
         chat_ts = (
-            max(datetime.fromisoformat(i['timestamp']) for i in data_id['chat_interactions'])
+            [
+                datetime.fromisoformat(i["timestamp"])
+                for i in data_id['chat_interactions']
+            ]
             if data_id['chat_interactions']
             else None
         )
+        
         return eval_ts, chat_ts
+    
+    def process_interactions_timestamps(
+        eval_ts: datetime|None,
+        chat_ts: list[datetime]|None
+    ) -> tuple[datetime, datetime, datetime, float, float, float, float]:
+        #Get chat timestamps
+        chat_first_timestamp = min(x for x in chat_ts) if chat_ts else None 
+        chat_last_timestamp = max(x for x in chat_ts) if chat_ts else None 
+        
+        #Get last interaction
+        candidates = [x for x in [eval_ts, chat_last_timestamp] if x is not None]
+        last_ts = max(candidates) if candidates else None
+        
+        #Compute chat time_interval and full experiment time interval
+        chat_first_last_time_interval = (
+            (chat_last_timestamp - chat_first_timestamp).total_seconds() / 60
+            if chat_first_timestamp and chat_last_timestamp
+            else None
+        )
+        
+        full_first_last_time_interval = (
+            (last_ts - chat_first_timestamp).total_seconds() / 60
+            if chat_first_timestamp and chat_last_timestamp
+            else None
+        )
+        
+        #Compute the difference in minutes
+        diffs_minutes = (
+            [
+                (chat_ts[i+1] - chat_ts[i]).total_seconds() / 60
+                for i in range(len(chat_ts) - 1)
+            ]
+            if chat_ts and len(chat_ts) > 1
+            else None
+        )
+        mean_diff = statistics.mean(diffs_minutes) if diffs_minutes else None
+        median_diff = statistics.median(diffs_minutes) if diffs_minutes else None
 
+        return chat_first_timestamp, chat_last_timestamp, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff
 
     rows = []
 
@@ -60,16 +104,24 @@ def process_interactions_data(raw_data):
         else:
             answers  = []
             eval_pass = None
-
-        valid_timestamps = [ts for ts in (eval_ts, chat_ts) if ts is not None]
-        final_ts = max(valid_timestamps) if valid_timestamps else None
+        
+        chat_first_timestamp, chat_last_timestamp, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff = process_interactions_timestamps(
+            eval_ts=eval_ts,
+            chat_ts=chat_ts
+        )
 
         rows.append({
             'id':                       data_id,
             'chat_interactions_counts': len(data['chat_interactions']),
             'evaluation_answers_counts': len(answers),
             'evaluation_pass':          eval_pass,
-            'final_timestamp_interactions':          final_ts,
+            'chat_first_timestamp': chat_first_timestamp,
+            'chat_last_timestamp': chat_last_timestamp,
+            'interactions_last_timestamp': last_ts,
+            'chat_usage_time_interval': chat_first_last_time_interval,
+            'chat_mean_time_per_interaction': mean_diff,
+            'chat_median_time_per_interaction': median_diff,
+            'interactions_usage_time_interval': full_first_last_time_interval
         })
 
     interactions_data = pl.DataFrame(rows)
