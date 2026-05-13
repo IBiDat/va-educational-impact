@@ -217,8 +217,10 @@ def categorize_wsdi(wsdi: float) -> str:
 def categorize_high_quality(wsdi: float) -> str:
     if wsdi >= 1.8:
         return True  
-    else:
+    elif wsdi < 1.8:
         return False
+    else:
+        return 'No Usado'
     
 #########################################################################################################################################################
 
