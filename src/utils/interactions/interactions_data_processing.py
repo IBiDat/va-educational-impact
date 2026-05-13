@@ -264,10 +264,20 @@ def categorize_wsdi(wsdi: float) -> str:
     else:
         return "Profunda" # > 2.2
 
+def categorize_wsdi_v2(wsdi: float) -> str:
+    if wsdi <= 0.5:
+        return 'Out_of_context' # <= 0.5
+    elif wsdi <= 1.4:
+        return "Cheating" # (0.5, 1.4]
+    elif wsdi <= 2.2:
+        return "Superficial" # (1.4, 2.2]
+    else:
+        return "Profunda" # > 2.2
+    
 #########################################################################################################################################################
 
 def categorize_high_quality(wsdi: float) -> str:
-    if wsdi >= 1.8:
+    if wsdi >= 2:
         return True  
     else:
         return False
@@ -343,6 +353,11 @@ def add_wsdi_cheating_score(wsdi_df, cheating_df, interactions_df):
         ).alias("WSDI_cat")
     ).with_columns(
         pl.col("WSDI").map_elements(
+            categorize_wsdi_v2, 
+            return_dtype=pl.String
+        ).alias("WSDI_cat_v2")
+    ).with_columns(
+        pl.col("WSDI").map_elements(
             categorize_high_quality, 
             return_dtype=pl.Boolean
         ).alias("high_quality_use")
@@ -351,6 +366,16 @@ def add_wsdi_cheating_score(wsdi_df, cheating_df, interactions_df):
         then(pl.col('chat_freq_use')).
         otherwise(pl.col('WSDI_cat')).
         alias('WSDI_cat')
+    ).with_columns(
+        pl.when(pl.col('WSDI_cat_v2').is_null()).
+        then(pl.col('chat_freq_use')).
+        otherwise(pl.col('WSDI_cat_v2')).
+        alias('WSDI_cat_v2')
+    ).with_columns(
+        pl.when(pl.col('high_quality_use').is_null()).
+        then(pl.col('chat_freq_use')).
+        otherwise(pl.col('high_quality_use')).
+        alias('high_quality_use')
     )
 
     interactions_df = interactions_df.join(
@@ -412,14 +437,6 @@ def segment_experimental_type(interactions_df):
           .when(freq_not_used).then(pl.lit("ExpNotUsed"))
           .otherwise(pl.lit("ExpOther"))
           .alias("experimental_type_freq_quality_v3")
-    )
-
-    interactions_df =  interactions_df.with_columns(
-        pl.when(calidad_alta).then(pl.lit("ExpA"))
-          .when(calidad_baja).then(pl.lit("ExpB"))
-          .when(freq_not_used).then(pl.lit("ExpNotUsed"))
-          .otherwise(pl.lit("ExpOther"))
-          .alias("experimental_type_freq_quality_v4")
     )
 
     return interactions_df
