@@ -439,6 +439,14 @@ def segment_experimental_type(interactions_df):
           .alias("experimental_type_freq_quality_v3")
     )
 
+    interactions_df =  interactions_df.with_columns(
+        pl.when(calidad_alta).then(pl.lit("ExpA"))
+          .when(calidad_baja).then(pl.lit("ExpB"))
+          .when(freq_not_used).then(pl.lit("ExpNotUsed"))
+          .otherwise(pl.lit("ExpOther"))
+          .alias("experimental_type_freq_quality_v4")
+    )
+
     return interactions_df
 
 #########################################################################################################################################################

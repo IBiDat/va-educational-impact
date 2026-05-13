@@ -2,7 +2,7 @@ import polars as pl
 
 def segment_groups(forms_interactions_df):
 
-    for version in ['v1', 'v2', 'v3']:
+    for version in ['v1', 'v2', 'v3', 'v4']:
         forms_interactions_df = forms_interactions_df.with_columns(
             pl.when(pl.col('grupo') == 'experimental')
             .then(pl.col(f'experimental_type_freq_quality_{version}'))
