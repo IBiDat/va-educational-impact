@@ -1,16 +1,22 @@
+#########################################################################################################
+
 import polars as pl
+
+#########################################################################################################
 
 def segment_groups(forms_interactions_df):
 
     for version in ['v1', 'v2', 'v3', 'v4']:
         forms_interactions_df = forms_interactions_df.with_columns(
             pl.when(pl.col('grupo') == 'experimental')
-            .then(pl.col(f'experimental_type_freq_quality_{version}'))
+            .then(pl.col(f'experimental_type_{version}'))
             .otherwise(pl.col('grupo'))
             .alias(f'grupo_segmented_{version}')
         )
 
     return forms_interactions_df
+
+#########################################################################################################
 
 def compute_time_interval_variables(
     combined_df: pl.DataFrame
@@ -72,3 +78,5 @@ def compute_time_interval_variables(
     )
 
     return combined_df
+
+#########################################################################################################

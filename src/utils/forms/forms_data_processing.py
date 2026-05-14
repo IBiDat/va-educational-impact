@@ -245,7 +245,7 @@ def add_hake_gains(df, metrics, max_score=1.0):
         col_post = f"{metric}_post"
         
         # Expresión para cada métrica
-        expr = (
+        expr_1 = (
             pl.when(pl.col(col_pre) == max_score)
             .then(pl.lit(0.0))
             .otherwise(
@@ -253,9 +253,19 @@ def add_hake_gains(df, metrics, max_score=1.0):
             )
             .alias(f"{metric}_hake_gain") # ej: puntuacion_tc_hake_gain
         )
-        hake_exprs.append(expr)
+
+        expr_2 = (
+            pl.when(pl.col(col_pre) == max_score)
+            .then(pl.lit(0.0))
+            .otherwise(
+                (pl.col(col_post) - pl.col(col_pre)).round(3)
+            )
+            .alias(f"{metric}_units_hake_gain") # ej: puntuacion_tc_hake_gain
+        )
+
+        hake_exprs.append(expr_1)
+        hake_exprs.append(expr_2)
         
-    # Polars ejecuta todas estas expresiones en paralelo
     return df.with_columns(hake_exprs)
 
 #########################################################################################################################################################
@@ -295,7 +305,12 @@ def add_hake_gain_categorization(df):
         pl.when(pl.col('puntuacion_tc_hake_gain') > 0)
         .then(True)
         .otherwise(False)
-        .alias('mejora')
+        .alias('mejora_hake_gain')
+    ).with_columns(
+        pl.when(pl.col('puntuacion_tc_units_hake_gain') > 0)
+        .then(True)
+        .otherwise(False)
+        .alias('mejora_units_hake_gain')
     )
 
     return df
