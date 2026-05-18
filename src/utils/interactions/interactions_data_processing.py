@@ -343,7 +343,7 @@ def process_semantic_depth_data(semantic_depth_data):
 def add_wsdi_cheating_score(wsdi_df, cheating_df, interactions_df):
 
     interactions_df = interactions_df.join(
-        wsdi_df[['id', 'WSDI']],
+        wsdi_df[['id', 'WSDI', 'count_cheating', 'count_out_of_context', 'count_superficial', 'count_deep']],
         how='left',
         on='id'
     ).with_columns(

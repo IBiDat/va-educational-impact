@@ -123,6 +123,8 @@ def main():
             'puntuacion_tc_transferencia_units_hake_gain_cat',
             'mejora_hake_gain',
             'mejora_units_hake_gain',
+            'niveles_mejora_hake_gain',
+            'niveles_mejora_hake_gain_v2',
             'puntuacion_tc_cat_trad_scale_pre',
             'puntuacion_tc_cat_trad_scale_post',
             'marca temporal_pre',

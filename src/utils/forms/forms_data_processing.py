@@ -313,6 +313,53 @@ def add_hake_gain_categorization(df):
         .alias('mejora_units_hake_gain')
     )
 
+    mejoras = df.filter(pl.col('puntuacion_tc_hake_gain') > 0)['puntuacion_tc_hake_gain']
+    empeoramientos = df.filter(pl.col('puntuacion_tc_hake_gain') <= 0)['puntuacion_tc_hake_gain']
+    q33_mejora = mejoras.quantile(0.33)
+    q50_mejora = mejoras.quantile(0.50)
+    q66_mejora = mejoras.quantile(0.66)
+    q33_empeoramiento = empeoramientos.quantile(0.33)
+    q50_empeoramiento = empeoramientos.quantile(0.50)
+    q66_empeoramiento = empeoramientos.quantile(0.66)
+
+    df = df.with_columns(
+        pl.when(pl.col('mejora_hake_gain') == True)
+        .then(
+            pl.when(pl.col('puntuacion_tc_hake_gain') <= q33_mejora)
+            .then(pl.lit('Mejora-Baja'))
+            .when(pl.col('puntuacion_tc_hake_gain') <= q66_mejora)
+            .then(pl.lit('Mejora-Media'))
+            .otherwise(pl.lit('Mejora-Alta'))
+        )
+        .when(pl.col('mejora_hake_gain') == False)
+        .then(
+            pl.when(pl.col('puntuacion_tc_hake_gain') >= q66_empeoramiento)
+            .then(pl.lit('Empeoramiento-Bajo'))
+            .when(pl.col('puntuacion_tc_hake_gain') >= q33_empeoramiento)
+            .then(pl.lit('Empeoramiento-Medio'))
+            .otherwise(pl.lit('Empeoramiento-Alto'))
+        )
+        .otherwise(None)
+        .alias('niveles_mejora_hake_gain')
+    )
+
+    df = df.with_columns(
+        pl.when(pl.col('mejora_hake_gain') == True)
+        .then(
+            pl.when(pl.col('puntuacion_tc_hake_gain') <= q50_mejora)
+            .then(pl.lit('Mejora-Baja'))
+            .otherwise(pl.lit('Mejora-Alta'))
+        )
+        .when(pl.col('mejora_hake_gain') == False)
+        .then(
+            pl.when(pl.col('puntuacion_tc_hake_gain') >= q50_empeoramiento)
+            .then(pl.lit('Empeoramiento-Bajo'))
+            .otherwise(pl.lit('Empeoramiento-Alto'))
+        )
+        .otherwise(None)
+        .alias('niveles_mejora_hake_gain_v2')
+    )
+
     return df
 
 #########################################################################################################################################################
