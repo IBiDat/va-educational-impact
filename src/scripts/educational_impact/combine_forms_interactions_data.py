@@ -122,6 +122,7 @@ def main():
             'puntuacion_tc_retencion_units_hake_gain_cat',
             'puntuacion_tc_transferencia_units_hake_gain_cat',
             'mejora_hake_gain',
+            'mejora_hake_gain_v2',
             'mejora_units_hake_gain',
             'niveles_mejora_hake_gain',
             'niveles_mejora_hake_gain_v2',

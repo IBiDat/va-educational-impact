@@ -447,6 +447,18 @@ def segment_experimental_type(interactions_df):
           .alias("experimental_type_v4")
     )
 
+    interactions_df =  interactions_df.with_columns(
+        pl.when(freq_not_used).then(pl.lit("ExpNotUsed"))
+          .otherwise(pl.lit("ExpUsed"))
+          .alias("experimental_type_v5")
+    )
+
+    interactions_df =  interactions_df.with_columns(
+        pl.when( freq_alta_v2 ).then(pl.lit("ExpA"))
+        .otherwise(pl.lit("ExpB"))
+          .alias("experimental_type_v6")
+    )
+
     return interactions_df
 
 #########################################################################################################################################################
