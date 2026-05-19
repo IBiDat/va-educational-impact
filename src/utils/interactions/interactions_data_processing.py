@@ -82,10 +82,16 @@ def process_interactions_data(raw_data):
             if chat_ts and len(chat_ts) > 1
             else None
         )
-        mean_diff = statistics.mean(diffs_minutes) if diffs_minutes else None
-        median_diff = statistics.median(diffs_minutes) if diffs_minutes else None
-
-        return chat_first_timestamp, chat_last_timestamp, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff
+        
+        if diffs_minutes:
+            mean_diff = statistics.mean(diffs_minutes)
+            median_diff = statistics.median(diffs_minutes)
+            stdev_diff = statistics.stdev(diffs_minutes) if len(diffs_minutes) > 1 else 0 
+            mean_weighted_diff = mean_diff/(1+stdev_diff) 
+        else: 
+            mean_diff, median_diff, mean_weighted_diff = None, None, None
+        
+        return chat_first_timestamp, chat_last_timestamp, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff, mean_weighted_diff
 
     rows = []
 
@@ -105,7 +111,7 @@ def process_interactions_data(raw_data):
             answers  = []
             eval_pass = None
         
-        chat_first_timestamp, chat_last_timestamp, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff = process_interactions_timestamps(
+        chat_first_timestamp, chat_last_timestamp, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff, mean_weighted_diff = process_interactions_timestamps(
             eval_ts=eval_ts,
             chat_ts=chat_ts
         )
@@ -121,6 +127,7 @@ def process_interactions_data(raw_data):
             'chat_usage_time_interval': chat_first_last_time_interval,
             'chat_mean_time_per_interaction': mean_diff,
             'chat_median_time_per_interaction': median_diff,
+            'chat_attention_score': mean_weighted_diff,
             'interactions_usage_time_interval': full_first_last_time_interval
         })
 
