@@ -535,7 +535,7 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=None, 
 #########################################################################################################################################################
 
 def plot_quant_scatter(df, comparisons, group_by=None, figsize=None,
-                       order=None, max_cols=3, title=False,
+                       order=None, max_cols=3, title=None, subplots_title=True,
                        palette="Set2", alpha=0.6, show_regression=True, corr_annotation=True,
                        bbox_to_anchor=(0.5, -0.03)):
 
@@ -580,7 +580,7 @@ def plot_quant_scatter(df, comparisons, group_by=None, figsize=None,
         pdf = df.select(cols).to_pandas().dropna(subset=[x_col, y_col])
 
         # --- TÍTULO ---
-        if title:
+        if subplots_title:
             block_title = f"{x_col.upper()} vs {y_col.upper()}"
             if group_by:
                 block_title += f"\n(por {group_by})"
@@ -659,6 +659,9 @@ def plot_quant_scatter(df, comparisons, group_by=None, figsize=None,
     total = n_rows_fig * n_cols_fig
     for i in range(n_blocks, total):
         fig.delaxes(axes[i // n_cols_fig, i % n_cols_fig])
+
+    if title:
+        fig.suptitle(title , fontsize=15, fontweight="bold", y=1.02)
 
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.10)
