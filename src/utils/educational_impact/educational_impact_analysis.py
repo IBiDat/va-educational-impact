@@ -180,7 +180,7 @@ def plot_quant_distribution(df, quant_cols, max_cols=3, box_color="skyblue", his
     plt.show()
 
 #########################################################################################################################################################
-def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showfliers=True, order=None, labelbottom=True, xlabel_rotation=30, max_cols=3, title=False, palette="Set2", bbox_to_anchor=(0.5, -0.03)):
+def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showfliers=True, order=None, labelbottom=True, xlabel_rotation=30, max_cols=3, title=None, palette="Set2", bbox_to_anchor=(0.5, -0.03)):
     
     n_blocks = len(comparisons)
 
@@ -236,13 +236,15 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
             ).dropna()
 
         # --- TÍTULO ---
-        if title:
+        if not title:
             block_title = " vs ".join(col.upper() for col in col_group)
             if group_by:
                 block_title += f"\n(por {group_by})"
             if not showfliers:
                 block_title += "\n(Outliers Hidden)"
             ax_box.set_title(block_title, fontsize=11, fontweight="bold", y=1.05)
+        else:
+            ax_box.set_title(title, fontsize=11, fontweight="bold", y=1.05)
 
         # --- BOXPLOT ---
         if group_by and len(col_group) == 1:
@@ -369,7 +371,7 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
 
 #########################################################################################################################################################
 
-def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False, order=None,
+def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=None, subplots_title=True, order=None,
                         hue_order=None, palette="Set2", cat_palette=None, 
                         bbox_to_anchor=(0.5, -0.03), sharey=False):
 
@@ -481,7 +483,7 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False,
                 legend=False
             )
 
-        if title:
+        if subplots_title:
             block_title = " vs ".join(col.upper() for col in col_group)
             if group_by:
                 block_title += f"\n(por {group_by})"
@@ -522,6 +524,9 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False,
         r = i // n_cols_fig
         c = i % n_cols_fig
         fig.delaxes(axes[r, c])
+
+    if title:
+        fig.suptitle(title , fontsize=15, fontweight="bold", y=1.02)
 
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.08)
