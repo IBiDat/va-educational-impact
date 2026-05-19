@@ -90,16 +90,16 @@ def main():
     logging.info("STEP 2: Selecting and filtering form columns...\n")
 
     try:
-        base_cols = ['id', 'centro', 'grupo']
+        BASE_COLS = ['id', 'centro', 'grupo']
 
-        metrics_pre_post = [
+        METRICS_PRE_POST = [
             'puntuacion_tc',
             'puntuacion_ta',
             'puntuacion_tc_retencion',
             'puntuacion_tc_transferencia'
         ]
 
-        metrics_post = [
+        METRICS_POST = [
             'puntuacion_tcc_rel_post',
             'puntuacion_tcc_int_post',
             'puntuacion_tcc_ext_post',
@@ -108,26 +108,36 @@ def main():
             'puntuacion_tcc_ext_cat_post',
         ]
 
-        extra_metrics = [
+        EXTRA_METRICS = [
             'puntuacion_tc_hake_gain',
             'puntuacion_tc_retencion_hake_gain',
             'puntuacion_tc_transferencia_hake_gain',
             'puntuacion_tc_hake_gain_cat',
             'puntuacion_tc_retencion_hake_gain_cat',
             'puntuacion_tc_transferencia_hake_gain_cat',
-            'mejora',
+            'puntuacion_tc_units_hake_gain',
+            'puntuacion_tc_retencion_units_hake_gain',
+            'puntuacion_tc_transferencia_units_hake_gain',
+            'puntuacion_tc_units_hake_gain_cat',
+            'puntuacion_tc_retencion_units_hake_gain_cat',
+            'puntuacion_tc_transferencia_units_hake_gain_cat',
+            'mejora_hake_gain',
+            'mejora_hake_gain_v2',
+            'mejora_units_hake_gain',
+            'niveles_mejora_hake_gain',
+            'niveles_mejora_hake_gain_v2',
             'puntuacion_tc_cat_trad_scale_pre',
             'puntuacion_tc_cat_trad_scale_post',
             'marca temporal_pre',
             'marca temporal_post'
         ]
 
-        forms_cols_analysis = base_cols + extra_metrics + [
+        forms_cols_analysis = BASE_COLS + EXTRA_METRICS + [
             f"{metric}{cat_suffix}_{period}"
             for period in ['pre', 'post']
             for cat_suffix in ['', '_cat']
-            for metric in metrics_pre_post
-        ] + metrics_post
+            for metric in METRICS_PRE_POST
+        ] + METRICS_POST
 
         forms_df = forms_df.select(forms_cols_analysis)
         logging.info(f" -> Forms columns filtered successfully. Total columns: {len(forms_cols_analysis)}\n")

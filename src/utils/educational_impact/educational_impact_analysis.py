@@ -7,6 +7,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import numpy as np
+from scipy import stats
 
 sns.set_style('whitegrid')
 
@@ -178,7 +180,6 @@ def plot_quant_distribution(df, quant_cols, max_cols=3, box_color="skyblue", his
     plt.show()
 
 #########################################################################################################################################################
-
 def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showfliers=True, order=None, labelbottom=True, xlabel_rotation=30, max_cols=3, title=False, palette="Set2", bbox_to_anchor=(0.5, -0.03)):
     
     n_blocks = len(comparisons)
@@ -197,7 +198,6 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
         figsize=(6 * n_cols_fig, 4 * n_rows_fig) if not figsize else figsize
     )
 
-    # Forzamos array 2D
     if n_rows_fig == 1 and n_cols_fig == 1:
         axes = np.array([[axes]])
     elif n_rows_fig == 1:
@@ -205,12 +205,12 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
     elif n_cols_fig == 1:
         axes = axes.reshape(-1, 1)
 
-    # Grupos únicos para leyenda (solo si hay group_by)
     if group_by:
         group_vals = df[group_by].drop_nulls().unique().sort().to_list()
-        group_colors = sns.color_palette(palette, len(group_vals))
-        group_color_map = dict(zip(group_vals, group_colors))
-        hue_order = order if order else group_vals
+        hue_order = group_vals
+        x_order_grouped = order if order else group_vals
+        group_colors = sns.color_palette(palette, len(x_order_grouped))
+        group_color_map = dict(zip(x_order_grouped, group_colors))
 
     # --- 2. DIBUJAR LOS BLOQUES ---
     for i, col_group in enumerate(comparisons):
@@ -245,13 +245,48 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
             ax_box.set_title(block_title, fontsize=11, fontweight="bold", y=1.05)
 
         # --- BOXPLOT ---
-        if group_by:
+        if group_by and len(col_group) == 1:
+            x_order_filtered = [g for g in x_order_grouped if g in tidy[group_by].values]
+
+            for j, group_val in enumerate(x_order_filtered):
+                mask = tidy[group_by] == group_val
+                subset = tidy.loc[mask, "valor"].dropna()
+                if len(subset) == 0:
+                    continue
+
+                ax_box.boxplot(
+                    subset,
+                    positions=[j],
+                    widths=0.5,
+                    showfliers=showfliers,
+                    patch_artist=True,
+                    boxprops=dict(facecolor=group_color_map[group_val], alpha=0.7),
+                    medianprops=dict(color="black", linewidth=1.5),
+                    whiskerprops=dict(color="black"),
+                    capprops=dict(color="black"),
+                    flierprops=dict(marker='o', markerfacecolor=group_color_map[group_val], markersize=4, alpha=0.5)
+                )
+
+                mean_val = subset.mean()
+                ax_box.plot(
+                    j, mean_val, marker="D",
+                    color=group_color_map[group_val],
+                    markersize=6,
+                    markeredgecolor="black", markeredgewidth=0.8,
+                    zorder=5
+                )
+
+            ax_box.set_xticks(range(len(x_order_filtered)))
+            ax_box.set_xticklabels(x_order_filtered)
+
+        elif group_by and len(col_group) > 1:
             sns.boxplot(
                 data=tidy, x="variable", y="valor",
                 hue=group_by, showfliers=showfliers,
                 palette=palette, ax=ax_box,
                 width=0.5, linewidth=1.5,
-                legend=False, hue_order=hue_order
+                legend=False, hue_order=hue_order,
+                order=col_group
             )
             for j, col in enumerate(col_group):
                 for g, group_val in enumerate(hue_order):
@@ -268,20 +303,24 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
                         markeredgecolor="black", markeredgewidth=0.8,
                         zorder=5
                     )
+
         else:
+            x_order = order if order else col_group
             var_colors = sns.color_palette(palette, len(col_group))
             sns.boxplot(
                 data=tidy, x="variable", y="valor",
                 hue="variable", showfliers=showfliers,
                 palette=palette, ax=ax_box,
                 width=0.5, linewidth=1.5,
-                legend=False
+                legend=False,
+                order=x_order
             )
-            for j, col in enumerate(col_group):
+            for j, col in enumerate(x_order):
                 mean_val = tidy[tidy["variable"] == col]["valor"].mean()
                 ax_box.plot(
                     j, mean_val, marker="D",
-                    color=var_colors[j], markersize=7,
+                    color=var_colors[col_group.index(col)],
+                    markersize=7,
                     markeredgecolor="black", markeredgewidth=0.8,
                     zorder=5
                 )
@@ -292,11 +331,12 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
 
     # --- 3. LEYENDA GLOBAL MANUAL ---
     if group_by:
+        legend_keys = x_order_grouped if len(comparisons[0]) == 1 else hue_order
         handles = [
             mpatches.Patch(color=group_color_map[g], alpha=0.7, label=str(g))
-            for g in hue_order
+            for g in legend_keys if g in group_color_map
         ]
-        legend_ncol = len(hue_order)
+        legend_ncol = len(handles)
     else:
         all_vars = [col for col_group in comparisons for col in col_group]
         unique_vars = list(dict.fromkeys(all_vars))
@@ -329,7 +369,9 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
 
 #########################################################################################################################################################
 
-def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False, order=None, palette="Set2", cat_palette=None, bbox_to_anchor=(0.5, -0.03)):
+def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False, order=None,
+                        hue_order=None, palette="Set2", cat_palette=None, 
+                        bbox_to_anchor=(0.5, -0.03), sharey=False):
 
     n_blocks = len(comparisons)
 
@@ -363,7 +405,8 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False,
 
     fig, axes = plt.subplots(
         nrows=n_rows_fig, ncols=n_cols_fig,
-        figsize=(6 * n_cols_fig, 5 * n_rows_fig)
+        figsize=(6 * n_cols_fig, 5 * n_rows_fig),
+        sharey=sharey
     )
 
     if n_rows_fig == 1 and n_cols_fig == 1:
@@ -393,15 +436,21 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False,
                 )
                 prop["proporcion"] = prop.groupby(group_by)["n"].transform(lambda x: x / x.sum())
 
+                # order → eje X (valores de col)
                 col_order = order if order else (
                     pdf[col].value_counts().sort_values(ascending=False).index.tolist()
                 )
+
+                # hue_order → orden de los grupos (valores de group_by)
+                resolved_hue_order = hue_order if hue_order else group_vals
+
                 local_palette = {k: fixed_palette[k] for k in group_vals if k in fixed_palette}
 
                 sns.barplot(
                     data=prop, x=col, y="proporcion", hue=group_by,
                     palette=local_palette,
                     order=col_order,
+                    hue_order=resolved_hue_order,
                     ax=ax,
                     legend=False
                 )
@@ -444,9 +493,10 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False,
 
     # --- 4. LEYENDA GLOBAL MANUAL ---
     if group_by:
+        legend_order = hue_order if hue_order else legend_keys
         handles = [
             mpatches.Patch(color=fixed_palette[g], alpha=0.8, label=str(g))
-            for g in legend_keys if g in fixed_palette
+            for g in legend_order if g in fixed_palette
         ]
     else:
         all_vars = [col for col_group in comparisons for col in col_group]
@@ -479,6 +529,319 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=False,
 
 #########################################################################################################################################################
 
+def plot_quant_scatter(df, comparisons, group_by=None, figsize=None,
+                       order=None, max_cols=3, title=False,
+                       palette="Set2", alpha=0.6, show_regression=True, corr_annotation=True,
+                       bbox_to_anchor=(0.5, -0.03)):
 
+    n_blocks = len(comparisons)
+    if n_blocks == 0:
+        print("Aviso: La lista de comparaciones está vacía.")
+        return
+
+    # --- 1. LAYOUT ---
+    n_cols_fig = min(n_blocks, max_cols)
+    n_rows_fig = math.ceil(n_blocks / n_cols_fig)
+
+    fig, axes = plt.subplots(
+        nrows=n_rows_fig, ncols=n_cols_fig,
+        figsize=(5 * n_cols_fig, 4.5 * n_rows_fig) if not figsize else figsize
+    )
+
+    if n_rows_fig == 1 and n_cols_fig == 1:
+        axes = np.array([[axes]])
+    elif n_rows_fig == 1:
+        axes = axes.reshape(1, -1)
+    elif n_cols_fig == 1:
+        axes = axes.reshape(-1, 1)
+
+    # --- 2. GRUPOS Y COLORES ---
+    if group_by:
+        group_vals = df[group_by].drop_nulls().unique().sort().to_list()
+        hue_order  = order if order else group_vals
+        group_colors = sns.color_palette(palette, len(hue_order))
+        group_color_map = dict(zip(hue_order, group_colors))
+    else:
+        pair_colors = sns.color_palette(palette, n_blocks)
+
+    # --- 3. DIBUJAR BLOQUES ---
+    for i, (x_col, y_col) in enumerate(comparisons):
+        r = i // n_cols_fig
+        c = i % n_cols_fig
+        ax = axes[r, c]
+
+        # Construir pandas subset
+        cols = [x_col, y_col] + ([group_by] if group_by else [])
+        pdf = df.select(cols).to_pandas().dropna(subset=[x_col, y_col])
+
+        # --- TÍTULO ---
+        if title:
+            block_title = f"{x_col.upper()} vs {y_col.upper()}"
+            if group_by:
+                block_title += f"\n(por {group_by})"
+            ax.set_title(block_title, fontsize=11, fontweight="bold", y=1.02)
+
+        # --- SCATTER + REGRESIÓN ---
+        if group_by:
+            for g in hue_order:
+                mask = pdf[group_by] == g
+                sub  = pdf[mask]
+                if sub.empty:
+                    continue
+                color = group_color_map[g]
+                ax.scatter(sub[x_col], sub[y_col],
+                           color=color, alpha=alpha, s=25,
+                           linewidths=0, label=str(g), zorder=3)
+                if show_regression and len(sub) > 2:
+                    m, b, r_val, *_ = stats.linregress(sub[x_col], sub[y_col])
+                    x_line = np.linspace(sub[x_col].min(), sub[x_col].max(), 100)
+                    ax.plot(x_line, m * x_line + b,
+                            color=color, linewidth=1.6, zorder=4)
+            # r global (todos los grupos)
+            r_val, p_val = stats.pearsonr(pdf[x_col], pdf[y_col])
+        else:
+            color = pair_colors[i]
+            ax.scatter(pdf[x_col], pdf[y_col],
+                       color=color, alpha=alpha, s=25,
+                       linewidths=0, zorder=3)
+            if show_regression and len(pdf) > 2:
+                m, b, r_val, p_val, _ = stats.linregress(pdf[x_col], pdf[y_col])
+                x_line = np.linspace(pdf[x_col].min(), pdf[x_col].max(), 100)
+                ax.plot(x_line, m * x_line + b,
+                        color=color, linewidth=1.8, zorder=4)
+            r_val, p_val = stats.pearsonr(pdf[x_col], pdf[y_col])
+
+        # --- LÍNEAS DE MEDIA ---
+        ax.axvline(pdf[x_col].mean(), color="gray", linewidth=0.8,
+                   linestyle="--", alpha=0.6, zorder=2)
+        ax.axhline(pdf[y_col].mean(), color="gray", linewidth=0.8,
+                   linestyle="--", alpha=0.6, zorder=2)
+
+        # --- ANOTACIÓN r ---
+        if corr_annotation:
+            p_str = "p<0.001" if p_val < 0.001 else f"p={p_val:.3f}"
+            ax.annotate(f"r = {r_val:.2f}  ({p_str})",
+                        xy=(0.04, 0.96), xycoords="axes fraction",
+                        fontsize=9, va="top",
+                        bbox=dict(boxstyle="round,pad=0.3",
+                                fc="white", ec="lightgray", alpha=0.8))
+
+        ax.set_xlabel(x_col, fontsize=10)
+        ax.set_ylabel(y_col, fontsize=10)
+        ax.tick_params(labelsize=8)
+
+    # --- 4. LEYENDA GLOBAL ---
+    if group_by:
+        handles = [
+            mpatches.Patch(color=group_color_map[g], alpha=0.8, label=str(g))
+            for g in hue_order
+        ]
+    else:
+        handles = [
+            mpatches.Patch(color=pair_colors[j], alpha=0.8,
+                           label=f"{x} vs {y}")
+            for j, (x, y) in enumerate(comparisons)
+        ]
+
+    fig.legend(handles=handles,
+               loc="lower center",
+               ncol=len(handles),
+               fontsize=9,
+               frameon=True,
+               bbox_to_anchor=bbox_to_anchor)
+
+    # --- 5. LIMPIAR SUBPLOTS VACÍOS ---
+    total = n_rows_fig * n_cols_fig
+    for i in range(n_blocks, total):
+        fig.delaxes(axes[i // n_cols_fig, i % n_cols_fig])
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.10)
+    plt.show()
+
+#########################################################################################################################################################
+
+def plot_quant_comparison_faceted(
+    df,
+    comparisons,
+    outer_group_by,
+    group_by=None,
+    outer_order=None,
+    order=None,
+    figsize=None,
+    showfliers=True,
+    labelbottom=True,
+    xlabel_rotation=30,
+    sharey="row",        # "row" | "all" | "none"
+    title=True,
+    palette="Set2",
+    bbox_to_anchor=(0.5, -0.03),
+):
+    """
+    sharey : {"row", "all", "none"}, default "row"
+        "row"  → misma escala Y por fila (mismo bloque de variables,
+                 distintos outer groups). Comparación directa entre columnas.
+        "all"  → un único eje Y global para toda la figura.
+        "none" → cada subplot tiene su propio eje Y independiente.
+    """
+
+    # --- 0. OUTER VALS ---
+    outer_vals = (
+        outer_order
+        if outer_order is not None
+        else df[outer_group_by].drop_nulls().unique().sort().to_list()
+    )
+
+    n_cols = len(outer_vals)
+    n_rows = len(comparisons)
+
+    if n_cols == 0 or n_rows == 0:
+        print("Aviso: comparisons u outer_group_by están vacíos.")
+        return
+
+    # --- 1. COLORES ---
+    if group_by:
+        group_vals  = df[group_by].drop_nulls().unique().sort().to_list()
+        hue_order   = order if order else group_vals
+        group_colors = sns.color_palette(palette, len(hue_order))
+        group_color_map = dict(zip(hue_order, group_colors))
+    else:
+        all_vars = list(dict.fromkeys(v for cg in comparisons for v in cg))
+        var_colors = sns.color_palette(palette, len(all_vars))
+        var_color_map = dict(zip(all_vars, var_colors))
+
+    # --- 2. FIGURA ---
+    # "row" y "all" se delegan a matplotlib directamente.
+    # "none" también, pero añadimos un paso posterior para romper
+    # cualquier linkeo residual.
+    sharey_flag = {"row": "row", "all": True, "none": False}[sharey]
+
+    fig, axes = plt.subplots(
+        nrows=n_rows,
+        ncols=n_cols,
+        figsize=(4.5 * n_cols, 4 * n_rows + 0.5) if not figsize else figsize,
+        sharey=sharey_flag,
+        squeeze=False,
+    )
+
+    # --- 3. TÍTULOS DE COLUMNA ---
+    for c, val in enumerate(outer_vals):
+        axes[0, c].set_title(
+            f"{outer_group_by} = {val}",
+            fontsize=11, fontweight="bold", pad=8,
+        )
+
+    # --- 4. DIBUJAR ---
+    for r, col_group in enumerate(comparisons):
+        for c, val in enumerate(outer_vals):
+            ax  = axes[r, c]
+            df_sub = df.filter(pl.col(outer_group_by) == val)
+
+            cols = col_group + ([group_by] if group_by else [])
+            pdf  = df_sub.select(cols).to_pandas()
+
+            if group_by:
+                tidy = pdf.melt(
+                    id_vars=group_by,
+                    value_vars=col_group,
+                    var_name="variable",
+                    value_name="valor",
+                ).dropna(subset=["valor", group_by])
+            else:
+                tidy = pdf.melt(
+                    var_name="variable",
+                    value_name="valor",
+                ).dropna()
+
+            if group_by:
+                sns.boxplot(
+                    data=tidy, x="variable", y="valor",
+                    hue=group_by, showfliers=showfliers,
+                    palette=palette, ax=ax,
+                    width=0.5, linewidth=1.2,
+                    legend=False, hue_order=hue_order,
+                )
+                for j, col in enumerate(col_group):
+                    for g, gval in enumerate(hue_order):
+                        mask = (tidy["variable"] == col) & (tidy[group_by] == gval)
+                        if mask.sum() == 0:
+                            continue
+                        mean_val = tidy.loc[mask, "valor"].mean()
+                        n_groups = len(hue_order)
+                        offset   = (g - (n_groups - 1) / 2) * (0.5 / n_groups)
+                        ax.plot(
+                            j + offset, mean_val,
+                            marker="D", color=group_color_map[gval],
+                            markersize=5,
+                            markeredgecolor="black", markeredgewidth=0.7,
+                            zorder=5,
+                        )
+            else:
+                block_palette = [var_color_map[v] for v in col_group]
+                sns.boxplot(
+                    data=tidy, x="variable", y="valor",
+                    hue="variable", showfliers=showfliers,
+                    palette=block_palette, ax=ax,
+                    width=0.5, linewidth=1.2,
+                    legend=False,
+                )
+                for j, col in enumerate(col_group):
+                    mean_val = tidy[tidy["variable"] == col]["valor"].mean()
+                    ax.plot(
+                        j, mean_val,
+                        marker="D", color=var_color_map[col],
+                        markersize=6,
+                        markeredgecolor="black", markeredgewidth=0.7,
+                        zorder=5,
+                    )
+
+            if title and c == 0:
+                ax.set_ylabel(" vs ".join(col_group), fontsize=9, labelpad=6)
+            else:
+                ax.set_ylabel("")
+
+            ax.set_xlabel("")
+            ax.tick_params(axis="x", labelbottom=labelbottom, rotation=xlabel_rotation)
+
+    # Reemplaza el paso 5 completo por esto:
+
+    # --- 5. DESACOPLAR EJES SI sharey="none" ---
+    # En matplotlib >= 3.7 get_shared_y_axes() devuelve un GrouperView
+    # inmutable. La solución es no linkear desde el principio (sharey=False)
+    # y forzar autoscale por subplot tras dibujar.
+    if sharey == "none":
+        for r in range(n_rows):
+            for c in range(n_cols):
+                ax = axes[r, c]
+                # Recalcular límites Y solo con los datos de este subplot
+                ax.relim()
+                ax.autoscale_view(scaley=True)
+                # Restaurar etiquetas Y que sharey=False puede haber ocultado
+                ax.tick_params(axis="y", labelleft=True)
+
+    # --- 6. LEYENDA GLOBAL ---
+    if group_by:
+        handles = [
+            mpatches.Patch(color=group_color_map[g], alpha=0.75, label=str(g))
+            for g in hue_order
+        ]
+    else:
+        handles = [
+            mpatches.Patch(color=var_color_map[v], alpha=0.75, label=v)
+            for v in all_vars
+        ]
+
+    fig.legend(
+        handles=handles,
+        loc="lower center",
+        ncol=len(handles),
+        fontsize=9,
+        frameon=True,
+        bbox_to_anchor=bbox_to_anchor,
+    )
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.10)
+    plt.show()
 
 #########################################################################################################################################################

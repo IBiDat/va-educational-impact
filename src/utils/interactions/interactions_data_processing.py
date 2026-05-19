@@ -343,7 +343,7 @@ def process_semantic_depth_data(semantic_depth_data):
 def add_wsdi_cheating_score(wsdi_df, cheating_df, interactions_df):
 
     interactions_df = interactions_df.join(
-        wsdi_df[['id', 'WSDI']],
+        wsdi_df[['id', 'WSDI', 'count_cheating', 'count_out_of_context', 'count_superficial', 'count_deep']],
         how='left',
         on='id'
     ).with_columns(
@@ -414,7 +414,7 @@ def segment_experimental_type(interactions_df):
           .when(~freq_alta &  calidad_alta).then(pl.lit("ExpBA"))
           .when( freq_alta & ~calidad_alta).then(pl.lit("ExpAB"))
           .otherwise(pl.lit("ExpBB"))
-          .alias("experimental_type_freq_quality_v1")
+          .alias("experimental_type_v1")
     )
 
     interactions_df =  interactions_df.with_columns(
@@ -426,7 +426,7 @@ def segment_experimental_type(interactions_df):
           .when( freq_media & calidad_baja).then(pl.lit("ExpMB"))
           .when(freq_not_used).then(pl.lit("ExpNotUsed"))
           .otherwise(pl.lit("ExpOther"))
-          .alias("experimental_type_freq_quality_v2")
+          .alias("experimental_type_v2")
     )
 
     interactions_df =  interactions_df.with_columns(
@@ -436,7 +436,7 @@ def segment_experimental_type(interactions_df):
           .when( freq_baja_v2 &  calidad_baja).then(pl.lit("ExpBB"))
           .when(freq_not_used).then(pl.lit("ExpNotUsed"))
           .otherwise(pl.lit("ExpOther"))
-          .alias("experimental_type_freq_quality_v3")
+          .alias("experimental_type_v3")
     )
 
     interactions_df =  interactions_df.with_columns(
@@ -444,7 +444,19 @@ def segment_experimental_type(interactions_df):
           .when(calidad_baja).then(pl.lit("ExpB"))
           .when(freq_not_used).then(pl.lit("ExpNotUsed"))
           .otherwise(pl.lit("ExpOther"))
-          .alias("experimental_type_freq_quality_v4")
+          .alias("experimental_type_v4")
+    )
+
+    interactions_df =  interactions_df.with_columns(
+        pl.when(freq_not_used).then(pl.lit("ExpNotUsed"))
+          .otherwise(pl.lit("ExpUsed"))
+          .alias("experimental_type_v5")
+    )
+
+    interactions_df =  interactions_df.with_columns(
+        pl.when( freq_alta_v2 ).then(pl.lit("ExpA"))
+        .otherwise(pl.lit("ExpB"))
+          .alias("experimental_type_v6")
     )
 
     return interactions_df
