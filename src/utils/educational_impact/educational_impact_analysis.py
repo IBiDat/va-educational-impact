@@ -32,7 +32,7 @@ def group_stats(df, cols, group_by):
 
 #########################################################################################################################################################
 
-def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2"):
+def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2", sharey=False):
     """
     Crea un multiplot adaptativo mostrando la proporción de las categorías 
     para una lista de columnas de un DataFrame de Polars.
@@ -46,7 +46,6 @@ def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2"):
     
     n_vars = len(cat_cols)
     
-    # Validación de seguridad
     if n_vars == 0:
         print("Aviso: La lista de columnas está vacía.")
         return
@@ -55,10 +54,8 @@ def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2"):
     n_cols_fig = min(n_vars, max_cols)
     n_rows_fig = math.ceil(n_vars / n_cols_fig) 
 
-    # Ajustamos el tamaño de la figura dinámicamente
-    fig, axes = plt.subplots(nrows=n_rows_fig, ncols=n_cols_fig, figsize=(6 * n_cols_fig, 5 * n_rows_fig))
+    fig, axes = plt.subplots(nrows=n_rows_fig, ncols=n_cols_fig, figsize=(6 * n_cols_fig, 5 * n_rows_fig), sharey=sharey)
 
-    # Forzamos a que axes sea siempre un array 2D
     if n_rows_fig == 1 and n_cols_fig == 1:
         axes = np.array([[axes]])
     elif n_rows_fig == 1:
@@ -73,10 +70,9 @@ def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2"):
         c = i % n_cols_fig
         ax = axes[r, c]
         
-        # Procesamiento con Polars y conversión a Pandas para Seaborn
         serie_str = df[col].fill_null("Nulo").cast(pl.String).to_pandas()
+        total = len(serie_str)
         
-        # Gráfico de proporciones
         sns.countplot(
             x=serie_str, 
             ax=ax, 
@@ -87,7 +83,22 @@ def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2"):
             order=order
         )
         
-        # Configuración de títulos y etiquetas
+        # Superponer el count en cada barra
+        for patch in ax.patches:
+            height = patch.get_height()
+            if height > 0:
+                count = round(height * total)
+                ax.text(
+                    patch.get_x() + patch.get_width() / 2,  # centro horizontal
+                    height,                          # justo encima de la barra
+                    f"n={count}",
+                    ha='center',
+                    va='bottom',
+                    fontsize=10,
+                    fontweight='bold',
+                    color='#333333'
+                )
+        
         ax.set_title(col.upper(), fontsize=12, fontweight='bold')
         ax.set_xlabel('')
         ax.set_ylabel('Proporción')
