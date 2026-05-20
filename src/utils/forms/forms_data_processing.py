@@ -156,6 +156,18 @@ def add_categorization(df):
         .when((pl.col('puntuacion_tc') >= 0.7) & (pl.col('puntuacion_tc') < 0.9)).then(pl.lit('notable'))
         .otherwise(pl.lit('sobresaliente'))
         .alias('puntuacion_tc_cat_trad_scale')
+    ).with_columns(
+        pl.when(pl.col('puntuacion_tc') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
+        .otherwise(pl.lit('notable-sobresaliente'))
+        .alias('puntuacion_tc_cat_trad_scale_v2')
+    ).with_columns(
+        pl.when(pl.col('puntuacion_tc_retencion') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
+        .otherwise(pl.lit('notable-sobresaliente'))
+        .alias('puntuacion_tc_retencion_cat_trad_scale_v2')
+    ).with_columns(
+        pl.when(pl.col('puntuacion_tc_transferencia') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
+        .otherwise(pl.lit('notable-sobresaliente'))
+        .alias('puntuacion_tc_transferencia_cat_trad_scale_v2')
     )
 
     # Generación de la Puntuación Final Sintética

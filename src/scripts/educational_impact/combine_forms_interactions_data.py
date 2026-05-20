@@ -127,7 +127,13 @@ def main():
             'niveles_mejora_hake_gain',
             'niveles_mejora_hake_gain_v2',
             'puntuacion_tc_cat_trad_scale_pre',
+            'puntuacion_tc_cat_trad_scale_v2_pre',
+            'puntuacion_tc_retencion_cat_trad_scale_v2_pre',
+            'puntuacion_tc_transferencia_cat_trad_scale_v2_pre',
             'puntuacion_tc_cat_trad_scale_post',
+            'puntuacion_tc_cat_trad_scale_v2_post',
+            'puntuacion_tc_retencion_cat_trad_scale_v2_post',
+            'puntuacion_tc_transferencia_cat_trad_scale_v2_post',
             'marca temporal_pre',
             'marca temporal_post'
         ]
