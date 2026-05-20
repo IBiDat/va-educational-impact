@@ -9,6 +9,7 @@ from google.genai import types
 from typing import TypedDict
 
 import statistics
+import numpy as np
 from datetime import datetime
 
 #########################################################################################################################################################
@@ -48,16 +49,71 @@ def process_interactions_data(raw_data):
         
         return eval_ts, chat_ts
     
+    def calculate_gini_chat_interaction_distribution_score(
+        timestamps: list[datetime]|None
+    ):
+        """
+        Calculates a score from 0.0 to 1.0 indicating how evenly distributed 
+        a user's interactions are across their own timeline.
+        
+        Args:
+            timestamps (list of datetime): List of interaction datetimes.
+            
+        Returns:
+            float: Score between 0.0 (highly concentrated) and 1.0 (highly distributed).
+        """
+        # If there are fewer than 3 interactions, distribution cannot be meaningfully measured
+        if not timestamps or len(timestamps) < 3:
+            return 0.0
+            
+        # 1. Sort timestamps chronologically
+        timestamps = sorted(timestamps)
+        
+        # 2. Calculate time differences (in seconds) between consecutive interactions
+        timestamps_seconds = [t.timestamp() for t in timestamps]
+        time_differences = np.diff(timestamps_seconds)
+        
+        # If all interactions occurred at the exact same second
+        if np.sum(time_differences) == 0:
+            return 0.0
+            
+        # 3. Sort differences in ascending order (required for Gini calculation)
+        sorted_differences = np.sort(time_differences)
+        n = len(sorted_differences)
+        
+        # 4. Calculate the raw Gini Coefficient
+        indices = np.arange(1, n + 1)
+        numerator = np.sum((2 * indices - n - 1) * sorted_differences)
+        denominator = n * np.sum(sorted_differences)
+        
+        gini_raw = numerator / denominator
+        
+        # 5. Apply sample size correction so that the maximum Gini is always 1.0
+        if n > 1:
+            corrected_gini = gini_raw * (n / (n - 1))
+        else:
+            corrected_gini = gini_raw
+        
+        # Cap at 1.0 to handle potential floating-point precision errors
+        corrected_gini = min(corrected_gini, 1.0)
+        
+        # 6. Invert the Gini index so 1 means "highly distributed" and 0 means "highly concentrated"
+        score = 1.0 - corrected_gini
+        
+        return score
+    
     def process_interactions_timestamps(
         eval_ts: datetime|None,
         chat_ts: list[datetime]|None
     ) -> tuple[datetime, datetime, datetime, float, float, float, float]:
         #Get chat timestamps
         chat_first_timestamp = min(x for x in chat_ts) if chat_ts else None 
-        chat_last_timestamp = max(x for x in chat_ts) if chat_ts else None 
+        chat_last_timestamp = max(x for x in chat_ts) if chat_ts else None     
         
         #Get last interaction
-        candidates = [x for x in [eval_ts, chat_last_timestamp] if x is not None]
+        chat_timestamps_list = chat_ts or []
+        candidates = [x for x in [eval_ts] + chat_timestamps_list if x is not None]
+        first_ts = min(candidates) if candidates else None
         last_ts = max(candidates) if candidates else None
         
         #Compute chat time_interval and full experiment time interval
@@ -68,7 +124,7 @@ def process_interactions_data(raw_data):
         )
         
         full_first_last_time_interval = (
-            (last_ts - chat_first_timestamp).total_seconds() / 60
+            (last_ts - first_ts).total_seconds() / 60
             if chat_first_timestamp and chat_last_timestamp
             else None
         )
@@ -88,10 +144,18 @@ def process_interactions_data(raw_data):
             median_diff = statistics.median(diffs_minutes)
             stdev_diff = statistics.stdev(diffs_minutes) if len(diffs_minutes) > 1 else 0 
             mean_weighted_diff = mean_diff/(1+stdev_diff) 
+            
+            #Compute Gini Score for user interactions
+            score = calculate_gini_chat_interaction_distribution_score(
+                timestamps=chat_ts
+            )
+            
+            #Multiply score by full_first_last_time_interval
+            gini_chat_interaction_distribution = score * full_first_last_time_interval * len(chat_ts)       
         else: 
-            mean_diff, median_diff, mean_weighted_diff = None, None, None
-        
-        return chat_first_timestamp, chat_last_timestamp, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff, mean_weighted_diff
+            mean_diff, median_diff, mean_weighted_diff, gini_chat_interaction_distribution = None, None, None, None
+            
+        return chat_first_timestamp, chat_last_timestamp, first_ts, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff, mean_weighted_diff, gini_chat_interaction_distribution
 
     rows = []
 
@@ -111,7 +175,7 @@ def process_interactions_data(raw_data):
             answers  = []
             eval_pass = None
         
-        chat_first_timestamp, chat_last_timestamp, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff, mean_weighted_diff = process_interactions_timestamps(
+        chat_first_timestamp, chat_last_timestamp, first_ts, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff, mean_weighted_diff, gini_chat_interaction_distribution = process_interactions_timestamps(
             eval_ts=eval_ts,
             chat_ts=chat_ts
         )
@@ -123,12 +187,14 @@ def process_interactions_data(raw_data):
             'evaluation_pass':          eval_pass,
             'chat_first_timestamp': chat_first_timestamp,
             'chat_last_timestamp': chat_last_timestamp,
-            'interactions_last_timestamp': last_ts,
+            'tool_first_timestamp': first_ts,
+            'tool_last_timestamp': last_ts,
             'chat_usage_time_interval': chat_first_last_time_interval,
             'chat_mean_time_per_interaction': mean_diff,
             'chat_median_time_per_interaction': median_diff,
-            'chat_attention_score': mean_weighted_diff,
-            'interactions_usage_time_interval': full_first_last_time_interval
+            'chat_mean_weighted_time_per_interaction': mean_weighted_diff,
+            'chat_attention_score': gini_chat_interaction_distribution,
+            'tool_usage_time_interval': full_first_last_time_interval
         })
 
     interactions_data = pl.DataFrame(rows)
@@ -154,6 +220,12 @@ def process_interactions_data(raw_data):
             .cast(pl.Utf8)
         )
         .alias("chat_freq_use_v2")
+    )
+    
+    #Normalize chat_attention_score 
+    interactions_data = interactions_data.with_columns(
+        chat_attention_score = (pl.col("chat_attention_score") - pl.col("chat_attention_score").min()) / 
+                    (pl.col("chat_attention_score").max() - pl.col("chat_attention_score").min())
     )
 
     return interactions_data

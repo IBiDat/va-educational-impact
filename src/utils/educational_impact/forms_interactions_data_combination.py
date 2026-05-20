@@ -37,7 +37,7 @@ def compute_time_interval_variables(
         "puntuacion_tc_post",
         
         #Evaluation Timestamp
-        "interactions_last_timestamp"
+        "tool_last_timestamp"
     )
 
     #Include Ganancia Unidades de Conocimiento
@@ -47,11 +47,11 @@ def compute_time_interval_variables(
 
     #Transform final_timestamp_interaction time
     filtered_df = filtered_df.with_columns(
-        pl.col("interactions_last_timestamp")
+        pl.col("tool_last_timestamp")
         .dt.replace_time_zone("UTC")        # label it as UTC first (since it's naive)
         .dt.convert_time_zone("Europe/Madrid")  # converts respecting DST
         .dt.replace_time_zone(None)
-        .alias("interactions_last_timestamp")
+        .alias("tool_last_timestamp")
     )
 
     #Create groups (Instituto-Grupo)
