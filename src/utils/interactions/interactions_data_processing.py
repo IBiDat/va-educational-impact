@@ -193,7 +193,7 @@ def process_interactions_data(raw_data):
             'chat_mean_time_per_interaction': mean_diff,
             'chat_median_time_per_interaction': median_diff,
             'chat_mean_weighted_time_per_interaction': mean_weighted_diff,
-            'chat_attention_score': gini_chat_interaction_distribution,
+            'tool_usage_score': gini_chat_interaction_distribution,
             'tool_usage_time_interval': full_first_last_time_interval
         })
 
@@ -222,10 +222,10 @@ def process_interactions_data(raw_data):
         .alias("chat_freq_use_v2")
     )
     
-    #Normalize chat_attention_score 
+    #Normalize tool_usage_score 
     interactions_data = interactions_data.with_columns(
-        chat_attention_score = (pl.col("chat_attention_score") - pl.col("chat_attention_score").min()) / 
-                    (pl.col("chat_attention_score").max() - pl.col("chat_attention_score").min())
+        tool_usage_score = (pl.col("tool_usage_score") - pl.col("tool_usage_score").min()) / 
+                    (pl.col("tool_usage_score").max() - pl.col("tool_usage_score").min())
     )
 
     return interactions_data
