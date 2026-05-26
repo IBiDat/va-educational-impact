@@ -26,7 +26,9 @@ semantic_depth_data_filename = 'semantic_depth_data.json'
 raw_data_path = os.path.join(project_path, 'data', 'interactions', 'raw_data', raw_data_filename)
 semantic_depth_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', semantic_depth_data_filename)
 cheating_data_filename = 'id_cheating_score.parquet'
+prompt_type_filename = 'id_grouped_prompt_type.parquet'
 cheating_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'cheating_score', cheating_data_filename)
+prompt_type_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'interactions_type', prompt_type_filename)
 output_dir = os.path.join(project_path, 'data', 'interactions', 'processed_data')
 
 ###########################################################################################
@@ -92,15 +94,33 @@ def main():
     except Exception as e:
         logging.error(f"Error during dataframe join: {e}")
         sys.exit(1)
+    
+    # 4. Join Prompt Type to Interactions
+    logging.info("STEP 4: Adding Prompt Type to interactions dataframe...\n")
 
+    try:
+        prompt_type_df = pl.read_parquet(prompt_type_data_path)
+        interactions_df = interactions_df.join(
+            prompt_type_df,
+            on="id", 
+            how="left"
+        ).rename({
+            "RETENTION": "count_retention",
+            "TRANSFERENCE": "count_transference"
+        })
+        logging.info(f" -> Join completed successfully\n")
 
-    # 4. Process Combined Interactions Data
-    logging.info("STEP 4: Segmenting Experimental Group...\n")
+    except Exception as e:
+        logging.error(f"Error during dataframe join: {e}")
+        sys.exit(1)
+
+    # 5. Process Combined Interactions Data
+    logging.info("STEP 5: Segmenting Experimental Group...\n")
 
     interactions_df = segment_experimental_type(interactions_df)
 
-    # 5. Save Outputs
-    logging.info("STEP 5: Saving results to Parquet...\n")
+    # 6. Save Outputs
+    logging.info("STEP 6: Saving results to Parquet...\n")
 
     output_files = {
         'semantic_depth.parquet': semantic_depth_df,
