@@ -32,7 +32,7 @@ def group_stats(df, cols, group_by):
 
 #########################################################################################################################################################
 
-def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2", sharey=False):
+def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2", sharey=False, x_rotation=30):
     """
     Crea un multiplot adaptativo mostrando la proporción de las categorías 
     para una lista de columnas de un DataFrame de Polars.
@@ -102,7 +102,7 @@ def plot_cat_distribution(df, cat_cols, order=None, max_cols=3, palette="Set2", 
         ax.set_title(col.upper(), fontsize=12, fontweight='bold')
         ax.set_xlabel('')
         ax.set_ylabel('Proporción')
-        ax.tick_params(axis='x', rotation=30, labelsize=12)
+        ax.tick_params(axis='x', rotation=x_rotation, labelsize=12)
 
     # --- 3. LIMPIEZA DE ESPACIOS VACÍOS ---
     total_blocks = n_rows_fig * n_cols_fig
@@ -386,7 +386,7 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
 
 def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=None, subplots_title=True, order=None,
                         hue_order=None, palette="Set2", cat_palette=None, 
-                        bbox_to_anchor=(0.5, -0.03), sharey=False):
+                        bbox_to_anchor=(0.5, -0.03), sharey=False, x_rotation=30):
 
     n_blocks = len(comparisons)
 
@@ -553,7 +553,7 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=None, 
 
         ax.set_xlabel("")
         ax.set_ylabel("Proporción condicional")
-        ax.tick_params(axis='x', rotation=30, labelsize=10)
+        ax.tick_params(axis='x', rotation=x_rotation, labelsize=10)
 
     # --- 4. LEYENDA GLOBAL MANUAL ---
     if group_by:
