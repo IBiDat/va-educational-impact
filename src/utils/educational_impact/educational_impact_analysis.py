@@ -191,6 +191,7 @@ def plot_quant_distribution(df, quant_cols, max_cols=3, box_color="skyblue", his
     plt.show()
 
 #########################################################################################################################################################
+
 def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showfliers=True, order=None, labelbottom=True, xlabel_rotation=30, max_cols=3, title=None, palette="Set2", bbox_to_anchor=(0.5, -0.03)):
     
     n_blocks = len(comparisons)
@@ -382,6 +383,219 @@ def plot_quant_comparison(df, comparisons, group_by=None, figsize=None, showflie
 
 #########################################################################################################################################################
 
+
+def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=None, subplots_title=True, order=None,
+                        hue_order=None, palette="Set2", cat_palette=None, 
+                        bbox_to_anchor=(0.5, -0.03), sharey=False):
+
+    n_blocks = len(comparisons)
+
+    if n_blocks == 0:
+        print("Aviso: La lista de comparaciones está vacía.")
+        return
+
+    # --- 1. PALETA FIJA POR CATEGORÍA ---
+    if group_by:
+        group_vals = df[group_by].drop_nulls().cast(pl.String).unique().sort().to_list()
+        if cat_palette:
+            fixed_palette = cat_palette
+        else:
+            fixed_palette = dict(zip(group_vals, sns.color_palette(palette, len(group_vals))))
+        legend_keys = group_vals
+    else:
+        all_cats = (
+            df.select([pl.col(col).cast(pl.String) for col_group in comparisons for col in col_group])
+            .to_pandas().stack().unique()
+        )
+        if cat_palette:
+            fixed_palette = cat_palette
+        else:
+            fixed_palette = dict(zip(all_cats, sns.color_palette(palette, len(all_cats))))
+        legend_keys = list(fixed_palette.keys())
+
+    # --- 2. CONFIGURACIÓN ADAPTATIVA ---
+    n_cols_fig = min(n_blocks, max_cols)
+    n_rows_blocks = math.ceil(n_blocks / n_cols_fig)
+    n_rows_fig = n_rows_blocks
+
+    fig, axes = plt.subplots(
+        nrows=n_rows_fig, ncols=n_cols_fig,
+        figsize=(6 * n_cols_fig, 5 * n_rows_fig),
+        sharey=sharey
+    )
+
+    if n_rows_fig == 1 and n_cols_fig == 1:
+        axes = np.array([[axes]])
+    elif n_rows_fig == 1:
+        axes = axes.reshape(1, -1)
+    elif n_cols_fig == 1:
+        axes = axes.reshape(-1, 1)
+
+    # --- 3. DIBUJAR LOS BLOQUES ---
+    for i, col_group in enumerate(comparisons):
+
+        r = i // n_cols_fig
+        c = i % n_cols_fig
+        ax = axes[r, c]
+
+        if group_by:
+            for col in col_group:
+                pdf = df.select([col, group_by]).to_pandas()
+                pdf[col] = pdf[col].fillna("Nulo").astype(str)
+
+                # Proporción condicional por grupo: n(cat, grupo) / n(grupo)
+                prop = (
+                    pdf.groupby([group_by, col])
+                    .size()
+                    .reset_index(name="n")
+                )
+                prop["proporcion"] = prop.groupby(group_by)["n"].transform(lambda x: x / x.sum())
+
+                # order → eje X (valores de col)
+                col_order = order if order else (
+                    pdf[col].value_counts().sort_values(ascending=False).index.tolist()
+                )
+
+                # hue_order → orden de los grupos (valores de group_by)
+                resolved_hue_order = hue_order if hue_order else group_vals
+                local_palette = {k: fixed_palette[k] for k in group_vals if k in fixed_palette}
+
+                sns.barplot(
+                    data=prop, x=col, y="proporcion", hue=group_by,
+                    palette=local_palette,
+                    order=col_order,
+                    hue_order=resolved_hue_order,
+                    ax=ax,
+                    legend=False
+                )
+
+                # --- ANOTACIÓN DE COUNT (GROUP_BY) ---
+                num_x = len(col_order)
+                for idx, patch in enumerate(ax.patches):
+                    height = patch.get_height()
+                    if pd.notna(height) and height > 0:
+                        hue_idx = idx // num_x
+                        x_idx = idx % num_x
+                        
+                        if hue_idx < len(resolved_hue_order) and x_idx < num_x:
+                            hue_val = resolved_hue_order[hue_idx]
+                            x_val = col_order[x_idx]
+                            
+                            # Buscar el count 'n' exacto en el dataframe prop
+                            row = prop[(prop[group_by] == hue_val) & (prop[col] == x_val)]
+                            if not row.empty:
+                                count = row["n"].values[0]
+                                ax.text(
+                                    patch.get_x() + patch.get_width() / 2, 
+                                    height, 
+                                    f"n={count}",
+                                    ha='center', va='bottom',
+                                    fontsize=10, fontweight='bold', color='#333333'
+                                )
+        else:
+            frames = []
+            for col in col_group:
+                serie = df[col].fill_null("Nulo").cast(pl.String).to_pandas()
+                frames.append(pd.DataFrame({"valor": serie, "variable": col}))
+            tidy = pd.concat(frames, ignore_index=True)
+
+            # Proporción condicional por variable: n(cat, variable) / n(variable)
+            prop = (
+                tidy.groupby(["variable", "valor"])
+                .size()
+                .reset_index(name="n")
+            )
+            prop["proporcion"] = prop.groupby("variable")["n"].transform(lambda x: x / x.sum())
+
+            col_order = order if order else (
+                tidy["valor"].value_counts().sort_values(ascending=False).index.tolist()
+            )
+
+            sns.barplot(
+                data=prop, x="valor", y="proporcion", hue="variable",
+                palette=palette,
+                order=col_order,
+                hue_order=col_group, # <-- Forzamos el hue_order para garantizar alineación en los patches
+                ax=ax,
+                legend=False
+            )
+
+            # --- ANOTACIÓN DE COUNT (ELSE) ---
+            num_x = len(col_order)
+            resolved_vars = col_group  # Las variables actúan como hue
+            for idx, patch in enumerate(ax.patches):
+                height = patch.get_height()
+                if pd.notna(height) and height > 0:
+                    hue_idx = idx // num_x
+                    x_idx = idx % num_x
+                    
+                    if hue_idx < len(resolved_vars) and x_idx < num_x:
+                        hue_val = resolved_vars[hue_idx]
+                        x_val = col_order[x_idx]
+                        
+                        # Buscar el count 'n' exacto en el dataframe prop
+                        row = prop[(prop["variable"] == hue_val) & (prop["valor"] == x_val)]
+                        if not row.empty:
+                            count = row["n"].values[0]
+                            ax.text(
+                                patch.get_x() + patch.get_width() / 2, 
+                                height, 
+                                f"n={count}",
+                                ha='center', va='bottom',
+                                fontsize=10, fontweight='bold', color='#333333'
+                            )
+
+        if subplots_title:
+            block_title = " vs ".join(col.upper() for col in col_group)
+            if group_by:
+                block_title += f"\n(por {group_by})"
+            ax.set_title(block_title, fontsize=11, fontweight="bold")
+
+        ax.set_xlabel("")
+        ax.set_ylabel("Proporción condicional")
+        ax.tick_params(axis='x', rotation=30, labelsize=10)
+
+    # --- 4. LEYENDA GLOBAL MANUAL ---
+    if group_by:
+        legend_order = hue_order if hue_order else legend_keys
+        handles = [
+            mpatches.Patch(color=fixed_palette[g], alpha=0.8, label=str(g))
+            for g in legend_order if g in fixed_palette
+        ]
+    else:
+        all_vars = [col for col_group in comparisons for col in col_group]
+        unique_vars = list(dict.fromkeys(all_vars))
+        var_colors = sns.color_palette(palette, len(unique_vars))
+        handles = [
+            mpatches.Patch(color=var_colors[j], alpha=0.8, label=var)
+            for j, var in enumerate(unique_vars)
+        ]
+
+    fig.legend(
+        handles=handles,
+        loc="lower center",
+        ncol=len(handles),
+        fontsize=9,
+        frameon=True,
+        bbox_to_anchor=bbox_to_anchor
+    )
+
+    # --- 5. LIMPIEZA DE ESPACIOS VACÍOS ---
+    total_blocks = n_rows_blocks * n_cols_fig
+    for i in range(n_blocks, total_blocks):
+        r = i // n_cols_fig
+        c = i % n_cols_fig
+        fig.delaxes(axes[r, c])
+
+    if title:
+        fig.suptitle(title , fontsize=15, fontweight="bold", y=1.02)
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.08)
+    plt.show()
+
+
+'''
 def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=None, subplots_title=True, order=None,
                         hue_order=None, palette="Set2", cat_palette=None, 
                         bbox_to_anchor=(0.5, -0.03), sharey=False):
@@ -542,7 +756,7 @@ def plot_cat_comparison(df, comparisons, group_by=None, max_cols=3, title=None, 
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.08)
     plt.show()
-
+'''
 #########################################################################################################################################################
 
 def plot_quant_scatter(df, comparisons, group_by=None, figsize=None,
