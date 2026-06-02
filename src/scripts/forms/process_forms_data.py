@@ -111,12 +111,12 @@ def main():
         metrics_to_hake = [
                     'puntuacion_tc', 
                     'puntuacion_tc_retencion', 
-                    'puntuacion_tc_transferencia'
+                    'puntuacion_tc_transferencia',
+                    'puntuacion_ta'
                 ]
 
         df_cruzado = add_hake_gains(df_cruzado, metrics_to_hake, max_score=1.0)
         df_cruzado = add_hake_gain_categorization(df_cruzado)
-
     except Exception as e:
         logging.error(f"Error computing Hake Metric: {e}")
         sys.exit(1)

@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.patheffects as pe
 import numpy as np
 from scipy import stats
 
@@ -864,3 +865,169 @@ def plot_quant_comparison_faceted(
     plt.show()
 
 #########################################################################################################################################################
+
+# ---------------------------------------------------------------------------
+# Palette & theme constants
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Palette & theme constants
+# ---------------------------------------------------------------------------
+_DARK_BG     = "#0e1117"
+_CARD_BG     = "#1a1f2e"
+_RICH_COLORS = [
+    "#5B8CFF", "#FF6B6B", "#43E97B", "#FFD93D",
+    "#C77DFF", "#FF8C42", "#00D4FF", "#FF4D9E",
+]
+ 
+ 
+def plot_quant_pie(df, columns, figsize=None, max_cols=3, title=None,
+                   subplots_title=True, palette=None, min_pct_label=3.0,
+                   donut=True, style="light", bbox_to_anchor=(0.5, -0.22)):
+    """
+    Plot one donut / pie chart per column in `columns`.
+ 
+    Parameters
+    ----------
+    df : polars.DataFrame
+        Source dataframe.
+    columns : list[str]
+        Categorical columns to plot; one chart each.
+    figsize : tuple[float, float] | None
+        Overall figure size. Defaults to (5.2 * n_cols, 5.0 * n_rows).
+    max_cols : int
+        Maximum number of charts per row.
+    title : str | None
+        Overall figure super-title.
+    subplots_title : bool
+        Whether to show a title above each individual chart.
+    palette : list[str] | None
+        List of hex colours. Defaults to a built-in vivid palette.
+    min_pct_label : float
+        Slices smaller than this percentage are not labelled.
+    donut : bool
+        If True (default) renders as a donut with a centre annotation.
+    style : {"dark", "light"}
+        Overall colour theme.
+    """
+ 
+    n_blocks = len(columns)
+    if n_blocks == 0:
+        print("Aviso: La lista de columnas está vacía.")
+        return
+ 
+    # --- 1. THEME ---
+    IS_DARK  = (style == "dark")
+    bg       = _DARK_BG  if IS_DARK else "#F8F7F4"
+    card_bg  = _CARD_BG  if IS_DARK else "#FFFFFF"
+    fg       = "#E8ECF4" if IS_DARK else "#1a1a2e"
+    sub_fg   = "#8892AA" if IS_DARK else "#666680"
+    edge_col = _DARK_BG  if IS_DARK else "#F0EEE8"
+    leg_bg   = _DARK_BG  if IS_DARK else "#F0EEE8"
+ 
+    colors = palette if palette else _RICH_COLORS
+ 
+    # --- 2. LAYOUT ---
+    n_cols_fig = min(n_blocks, max_cols)
+    n_rows_fig = math.ceil(n_blocks / n_cols_fig)
+ 
+    fw = 5.2 * n_cols_fig
+    fh = 5.0 * n_rows_fig + (1.0 if title else 0)
+    fig = plt.figure(figsize=figsize or (fw, fh), facecolor=bg)
+ 
+    axes = [fig.add_subplot(n_rows_fig, n_cols_fig, i + 1)
+            for i in range(n_blocks)]
+ 
+    # --- 3. DRAW EACH CHART ---
+    for i, col in enumerate(columns):
+        ax = axes[i]
+        ax.set_facecolor(card_bg)
+        for sp in ax.spines.values():
+            sp.set_visible(False)
+ 
+        counts = (
+            df.select(col)
+            .to_pandas()[col]
+            .dropna()
+            .value_counts()
+            .sort_values(ascending=False)
+        )
+        labels       = [str(lbl) for lbl in counts.index.tolist()]
+        values       = counts.values.tolist()
+        total        = sum(values)
+        n_cat        = len(labels)
+        slice_colors = [colors[j % len(colors)] for j in range(n_cat)]
+ 
+        wedges, _, autotexts = ax.pie(
+            values,
+            labels=None,
+            colors=slice_colors,
+            autopct=lambda p: f"{p:.1f}%" if p >= min_pct_label else "",
+            pctdistance=0.78,
+            startangle=90,
+            explode=[0.03] * n_cat,
+            wedgeprops=dict(
+                width=0.52 if donut else 1.0,
+                linewidth=2.5,
+                edgecolor=edge_col,
+            ),
+        )
+ 
+        # --- pct label styling ---
+        for at in autotexts:
+            at.set_fontsize(8)
+            at.set_color(fg)
+            at.set_fontweight("bold")
+            at.set_path_effects([pe.withStroke(linewidth=2, foreground=card_bg)])
+ 
+        # --- donut centre annotation ---
+        if donut:
+            ax.text(0,  0.06, f"{total:,}",
+                    ha="center", va="center", fontsize=15,
+                    fontweight="bold", color=fg, transform=ax.transData)
+            ax.text(0, -0.14, "total",
+                    ha="center", va="center", fontsize=8,
+                    color=sub_fg, transform=ax.transData)
+ 
+        # --- subplot title ---
+        if subplots_title:
+            ax.set_title(col.upper(), fontsize=12, fontweight="bold",
+                         color=fg, pad=14, loc="center",
+                         fontfamily="monospace")
+ 
+        # --- per-chart legend ---
+        legend_handles = [
+            mpatches.Patch(
+                facecolor=c, edgecolor="none",
+                label=f"{lbl}   {val:,}  ({val/total*100:.1f}%)"
+            )
+            for lbl, val, c in zip(labels, values, slice_colors)
+        ]
+        leg = ax.legend(
+            handles=legend_handles,
+            loc="lower center",
+            bbox_to_anchor=(0.5, -0.22),
+            fontsize=8,
+            frameon=True,
+            ncol=min(n_cat, 3),
+            facecolor=leg_bg,
+            edgecolor="none",
+            labelcolor=fg,
+            handlelength=1.0,
+            handleheight=0.9,
+            borderpad=0.6,
+            columnspacing=1.0,
+        )
+        leg.get_frame().set_alpha(0.85)
+ 
+    # --- 4. HIDE EMPTY AXES ---
+    for i in range(n_blocks, n_rows_fig * n_cols_fig):
+        fig.add_subplot(n_rows_fig, n_cols_fig, i + 1).set_visible(False)
+ 
+    # --- 5. GLOBAL TITLE ---
+    if title:
+        fig.suptitle(title, fontsize=16, fontweight="bold",
+                     color=fg, y=1.01, fontfamily="monospace")
+ 
+    plt.tight_layout(pad=2.2)
+    plt.subplots_adjust(bottom=0.15, hspace=0.45)
+    plt.show()
