@@ -1245,3 +1245,236 @@ def plot_quant_pie(df, columns, figsize=None, max_cols=3, title=None,
     plt.tight_layout(pad=2.2)
     plt.subplots_adjust(bottom=0.15, hspace=0.45)
     plt.show()
+
+#########################################################################################################################################################
+    
+def plot_cat_comparison_faceted(
+    df,
+    comparisons,
+    outer_group_by,
+    group_by=None,
+    outer_order=None,
+    order=None,
+    hue_order=None,
+    palette="Set2",
+    cat_palette=None,
+    figsize=None,
+    bbox_to_anchor=(0.5, -0.03),
+    sharey=False,
+    x_rotation=30,
+    subplots_title=True,
+    title=None,
+):
+    # --- 0. OUTER VALS ---
+    outer_vals = (
+        outer_order
+        if outer_order is not None
+        else df[outer_group_by].drop_nulls().cast(pl.String).unique().sort().to_list()
+    )
+
+    n_cols = len(outer_vals)
+    n_rows = len(comparisons)
+
+    if n_cols == 0 or n_rows == 0:
+        print("Aviso: comparisons u outer_group_by están vacíos.")
+        return
+
+    # --- 1. PALETA FIJA ---
+    if group_by:
+        group_vals = df[group_by].drop_nulls().cast(pl.String).unique().sort().to_list()
+        resolved_hue_order = hue_order if hue_order else group_vals
+        fixed_palette = cat_palette if cat_palette else dict(
+            zip(group_vals, sns.color_palette(palette, len(group_vals)))
+        )
+    else:
+        all_cats = (
+            df.select([pl.col(col).cast(pl.String) for col_group in comparisons for col in col_group])
+            .to_pandas().stack().unique()
+        )
+        fixed_palette = cat_palette if cat_palette else dict(
+            zip(sorted(all_cats), sns.color_palette(palette, len(all_cats)))
+        )
+
+    # --- 1b. PRE-COMPUTE GLOBAL X ORDER FROM FULL DF ---
+    # Keyed by (col_group tuple, col) for group_by branch, or (col_group tuple,) otherwise.
+    global_col_orders = {}
+    for col_group in comparisons:
+        key = tuple(col_group)
+        if order:
+            # User-supplied order wins for everything
+            if group_by:
+                for col in col_group:
+                    global_col_orders[(key, col)] = order
+            else:
+                global_col_orders[key] = order
+        elif group_by:
+            for col in col_group:
+                serie = df[col].fill_null("Nulo").cast(pl.String).to_pandas()
+                global_col_orders[(key, col)] = (
+                    serie.value_counts().sort_values(ascending=False).index.tolist()
+                )
+        else:
+            tidy = pd.concat(
+                [df[col].fill_null("Nulo").cast(pl.String).to_pandas().rename("valor")
+                 for col in col_group],
+                ignore_index=True,
+            )
+            global_col_orders[key] = (
+                tidy.value_counts().sort_values(ascending=False).index.tolist()
+            )
+
+    # --- 2. FIGURA ---
+    fig, axes = plt.subplots(
+        nrows=n_rows,
+        ncols=n_cols,
+        figsize=(4.5 * n_cols, 5 * n_rows) if figsize is None else figsize,
+        sharey=sharey,
+        squeeze=False,
+    )
+
+    # --- 3. TÍTULOS DE COLUMNA ---
+    for c, val in enumerate(outer_vals):
+        axes[0, c].set_title(
+            f"{outer_group_by} = {val}",
+            fontsize=11, fontweight="bold", pad=8,
+        )
+
+    # --- 4. DIBUJAR ---
+    for r, col_group in enumerate(comparisons):
+        key = tuple(col_group)
+        for c, val in enumerate(outer_vals):
+            ax = axes[r, c]
+            df_sub = df.filter(pl.col(outer_group_by).cast(pl.String) == str(val))
+
+            if group_by:
+                for col in col_group:
+                    col_order = global_col_orders[(key, col)]   # ← global order
+
+                    pdf = df_sub.select([col, group_by]).to_pandas()
+                    pdf[col] = pdf[col].fillna("Nulo").astype(str)
+
+                    prop = (
+                        pdf.groupby([group_by, col])
+                        .size()
+                        .reset_index(name="n")
+                    )
+                    prop["proporcion"] = prop.groupby(group_by)["n"].transform(
+                        lambda x: x / x.sum()
+                    )
+
+                    local_palette = {k: fixed_palette[k] for k in group_vals if k in fixed_palette}
+
+                    sns.barplot(
+                        data=prop, x=col, y="proporcion", hue=group_by,
+                        palette=local_palette,
+                        order=col_order,
+                        hue_order=resolved_hue_order,
+                        ax=ax,
+                        legend=False,
+                    )
+
+                    num_x = len(col_order)
+                    for idx, patch in enumerate(ax.patches):
+                        height = patch.get_height()
+                        if pd.notna(height) and height > 0:
+                            hue_idx = idx // num_x
+                            x_idx   = idx % num_x
+                            if hue_idx < len(resolved_hue_order) and x_idx < num_x:
+                                hue_val = resolved_hue_order[hue_idx]
+                                x_val   = col_order[x_idx]
+                                row = prop[(prop[group_by] == hue_val) & (prop[col] == x_val)]
+                                if not row.empty:
+                                    ax.text(
+                                        patch.get_x() + patch.get_width() / 2,
+                                        height,
+                                        f"n={row['n'].values[0]}",
+                                        ha="center", va="bottom",
+                                        fontsize=9, fontweight="bold", color="#333333",
+                                    )
+
+            else:
+                col_order = global_col_orders[key]              # ← global order
+
+                frames = []
+                for col in col_group:
+                    serie = df_sub[col].fill_null("Nulo").cast(pl.String).to_pandas()
+                    frames.append(pd.DataFrame({"valor": serie, "variable": col}))
+                tidy = pd.concat(frames, ignore_index=True)
+
+                prop = (
+                    tidy.groupby(["variable", "valor"])
+                    .size()
+                    .reset_index(name="n")
+                )
+                prop["proporcion"] = prop.groupby("variable")["n"].transform(
+                    lambda x: x / x.sum()
+                )
+
+                sns.barplot(
+                    data=prop, x="valor", y="proporcion", hue="variable",
+                    palette=palette,
+                    order=col_order,
+                    hue_order=col_group,
+                    ax=ax,
+                    legend=False,
+                )
+
+                num_x = len(col_order)
+                for idx, patch in enumerate(ax.patches):
+                    height = patch.get_height()
+                    if pd.notna(height) and height > 0:
+                        hue_idx = idx // num_x
+                        x_idx   = idx % num_x
+                        if hue_idx < len(col_group) and x_idx < num_x:
+                            hue_val = col_group[hue_idx]
+                            x_val   = col_order[x_idx]
+                            row = prop[(prop["variable"] == hue_val) & (prop["valor"] == x_val)]
+                            if not row.empty:
+                                ax.text(
+                                    patch.get_x() + patch.get_width() / 2,
+                                    height,
+                                    f"n={row['n'].values[0]}",
+                                    ha="center", va="bottom",
+                                    fontsize=9, fontweight="bold", color="#333333",
+                                )
+
+            if subplots_title and c == 0:
+                ax.set_ylabel(
+                    " vs ".join(col.upper() for col in col_group),
+                    fontsize=9, labelpad=6,
+                )
+            else:
+                ax.set_ylabel("Proporción condicional" if c == 0 else "")
+
+            ax.set_xlabel("")
+            ax.tick_params(axis="x", rotation=x_rotation, labelsize=10)
+
+    # --- 5. LEYENDA GLOBAL ---
+    if group_by:
+        handles = [
+            mpatches.Patch(color=fixed_palette[g], alpha=0.8, label=str(g))
+            for g in resolved_hue_order if g in fixed_palette
+        ]
+    else:
+        all_vars   = list(dict.fromkeys(col for col_group in comparisons for col in col_group))
+        var_colors = sns.color_palette(palette, len(all_vars))
+        handles = [
+            mpatches.Patch(color=var_colors[j], alpha=0.8, label=var)
+            for j, var in enumerate(all_vars)
+        ]
+
+    fig.legend(
+        handles=handles,
+        loc="lower center",
+        ncol=len(handles),
+        fontsize=9,
+        frameon=True,
+        bbox_to_anchor=bbox_to_anchor,
+    )
+
+    if title:
+        fig.suptitle(title, fontsize=15, fontweight="bold", y=1.02)
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.10)
+    plt.show()
