@@ -329,6 +329,27 @@ def add_hake_gain_categorization(df):
             .otherwise(pl.lit("Empeora"))
             .alias('mejora_hake_gain_v2')
     )
+    
+    #Mejoras en retencion y transferencia
+    df = df.with_columns(
+            pl.when(pl.col('puntuacion_tc_retencion_hake_gain') > 0).then(pl.lit("Mejora"))
+            .when(pl.col('puntuacion_tc_retencion_hake_gain') == 0).then(pl.lit("No Mejora"))
+            .otherwise(pl.lit("Empeora"))
+            .alias('mejora_retencion_hake_gain')
+    ).with_columns(
+            pl.when(pl.col('puntuacion_tc_transferencia_hake_gain') > 0).then(pl.lit("Mejora"))
+            .when(pl.col('puntuacion_tc_transferencia_hake_gain') == 0).then(pl.lit("No Mejora"))
+            .otherwise(pl.lit("Empeora"))
+            .alias('mejora_transferencia_hake_gain')
+    )
+    
+    #Mejoras en autoconfianza
+    df = df.with_columns(
+            pl.when(pl.col('puntuacion_ta_hake_gain') > 0).then(pl.lit("Mejora"))
+            .when(pl.col('puntuacion_ta_hake_gain') == 0).then(pl.lit("No Mejora"))
+            .otherwise(pl.lit("Empeora"))
+            .alias('mejora_autoconfianza_hake_gain')
+    )
 
     mejoras = df.filter(pl.col('puntuacion_tc_hake_gain') > 0)['puntuacion_tc_hake_gain']
     empeoramientos = df.filter(pl.col('puntuacion_tc_hake_gain') < 0)['puntuacion_tc_hake_gain']
