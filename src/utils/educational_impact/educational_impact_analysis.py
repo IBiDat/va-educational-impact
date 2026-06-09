@@ -14,6 +14,82 @@ from scipy import stats
 sns.set_style('whitegrid')
 
 #########################################################################################################################################################
+# ---------------------------------------------------------------------------
+# Palette & theme constants
+# ---------------------------------------------------------------------------
+_DARK_BG     = "#0e1117"
+_CARD_BG     = "#1a1f2e"
+_RICH_COLORS = [
+    "#5B8CFF", "#FF6B6B", "#43E97B", "#FFD93D",
+    "#C77DFF", "#FF8C42", "#00D4FF", "#FF4D9E",
+]
+
+# ---------------------------------------------------------------------------
+# Fixed colours for control / experimental groups.
+# These take precedence over any auto-generated palette everywhere in the file.
+# ---------------------------------------------------------------------------
+GROUP_PALETTE = {
+    "control":      "#66C2A5",   # Set2-1 — teal green
+    "experimental": "#FC8D62",   # Set2-2 — warm orange
+
+    "ExpA":  "#8DA0CB",          # Set2-3 — muted blue
+    "ExpAA": "#8DA0CB",
+
+    "ExpAB": "#FFD92FFF",          # Set2-4 — soft pink
+    "ExpBA": "#A6D854",          # Set2-5 — lime green
+
+    "ExpB":  "#E78AC3",          # Set2-6 — yellow
+    "ExpBB": "#E78AC3",
+
+    "ExpNotUsed": "#B3B3B3",     # Set2-7 — tan/beige
+}
+
+def resolve_palette(keys, base_palette="Set2", override=None):
+    """
+    Build a colour dict for *keys*, guaranteeing that any key present in
+    GROUP_PALETTE (case-insensitive match) receives its fixed colour.
+    All other keys are assigned colours from *base_palette*.
+
+    Parameters
+    ----------
+    keys : list[str]
+        The category / group values that need a colour.
+    base_palette : str
+        Seaborn palette name used for keys NOT in GROUP_PALETTE.
+    override : dict | None
+        Caller-supplied palette that takes absolute precedence over everything,
+        including GROUP_PALETTE (pass-through for explicit ``cat_palette``).
+
+    Returns
+    -------
+    dict[str, colour]
+    """
+    if override:
+        return override
+
+    result = {}
+    # Assign base colours first so every key has *something*
+    base_colors = sns.color_palette(base_palette, len(keys))
+    for k, c in zip(keys, base_colors):
+        result[k] = c
+
+    #Lower case every element in GROUP_PALETTE
+    LOWERCASE_PALETE = {
+        key.lower(): value 
+        if isinstance(value, str) else value 
+        for key, value in GROUP_PALETTE.items()
+    }
+
+    # Overwrite with GROUP_PALETTE where applicable (case-insensitive)
+    for k in keys:
+        match = LOWERCASE_PALETE.get(str(k).lower())
+        
+        if match:
+            result[k] = match
+
+    return result
+
+#########################################################################################################################################################
 def rename_df(
     df: pl.DataFrame
 ) -> pl.DataFrame:
@@ -321,8 +397,7 @@ def plot_quant_comparison(
         group_vals = df[group_by].drop_nulls().unique().sort().to_list()
         hue_order = group_vals
         x_order_grouped = order if order else group_vals
-        group_colors = sns.color_palette(palette, len(x_order_grouped))
-        group_color_map = dict(zip(x_order_grouped, group_colors))
+        group_color_map = resolve_palette(x_order_grouped, base_palette=palette)
 
     # --- 2. DIBUJAR LOS BLOQUES ---
     for i, col_group in enumerate(comparisons):
@@ -398,7 +473,7 @@ def plot_quant_comparison(
             sns.boxplot(
                 data=tidy, x="variable", y="valor",
                 hue=group_by, showfliers=showfliers,
-                palette=palette, ax=ax_box,
+                palette=group_color_map, ax=ax_box,
                 width=0.5, linewidth=1.5,
                 legend=False, hue_order=hue_order,
                 order=col_group
@@ -421,11 +496,11 @@ def plot_quant_comparison(
 
         else:
             x_order = order if order else col_group
-            var_colors = sns.color_palette(palette, len(col_group))
+            var_color_map = resolve_palette(col_group, base_palette=palette)
             sns.boxplot(
                 data=tidy, x="variable", y="valor",
                 hue="variable", showfliers=showfliers,
-                palette=palette, ax=ax_box,
+                palette=var_color_map, ax=ax_box,
                 width=0.5, linewidth=1.5,
                 legend=False,
                 order=x_order
@@ -434,7 +509,7 @@ def plot_quant_comparison(
                 mean_val = tidy[tidy["variable"] == col]["valor"].mean()
                 ax_box.plot(
                     j, mean_val, marker="D",
-                    color=var_colors[col_group.index(col)],
+                    color=var_color_map[col],
                     markersize=7,
                     markeredgecolor="black", markeredgewidth=0.8,
                     zorder=5
@@ -455,10 +530,10 @@ def plot_quant_comparison(
     else:
         all_vars = [col for col_group in comparisons for col in col_group]
         unique_vars = list(dict.fromkeys(all_vars))
-        legend_colors = sns.color_palette(palette, len(unique_vars))
+        legend_color_map = resolve_palette(unique_vars, base_palette=palette)
         handles = [
-            mpatches.Patch(color=legend_colors[j], alpha=0.7, label=var)
-            for j, var in enumerate(unique_vars)
+            mpatches.Patch(color=legend_color_map[var], alpha=0.7, label=var)
+            for var in unique_vars
         ]
         legend_ncol = len(unique_vars)
 
@@ -503,20 +578,14 @@ def plot_cat_comparison(
     # --- 1. PALETA FIJA POR CATEGORÍA ---
     if group_by:
         group_vals = df[group_by].drop_nulls().cast(pl.String).unique().sort().to_list()
-        if cat_palette:
-            fixed_palette = cat_palette
-        else:
-            fixed_palette = dict(zip(group_vals, sns.color_palette(palette, len(group_vals))))
+        fixed_palette = resolve_palette(group_vals, base_palette=palette, override=cat_palette)
         legend_keys = group_vals
     else:
         all_cats = (
             df.select([pl.col(col).cast(pl.String) for col_group in comparisons for col in col_group])
             .to_pandas().stack().unique()
         )
-        if cat_palette:
-            fixed_palette = cat_palette
-        else:
-            fixed_palette = dict(zip(all_cats, sns.color_palette(palette, len(all_cats))))
+        fixed_palette = resolve_palette(sorted(all_cats), base_palette=palette, override=cat_palette)
         legend_keys = list(fixed_palette.keys())
 
     # --- 2. CONFIGURACIÓN ADAPTATIVA ---
@@ -737,8 +806,7 @@ def plot_quant_scatter(
     if group_by:
         group_vals = df[group_by].drop_nulls().unique().sort().to_list()
         hue_order  = order if order else group_vals
-        group_colors = sns.color_palette(palette, len(hue_order))
-        group_color_map = dict(zip(hue_order, group_colors))
+        group_color_map = resolve_palette(hue_order, base_palette=palette)
     else:
         pair_colors = sns.color_palette(palette, n_blocks)
 
@@ -887,12 +955,10 @@ def plot_quant_comparison_faceted(
     if group_by:
         group_vals  = df[group_by].drop_nulls().unique().sort().to_list()
         hue_order   = order if order else group_vals
-        group_colors = sns.color_palette(palette, len(hue_order))
-        group_color_map = dict(zip(hue_order, group_colors))
+        group_color_map = resolve_palette(hue_order, base_palette=palette)
     else:
         all_vars = list(dict.fromkeys(v for cg in comparisons for v in cg))
-        var_colors = sns.color_palette(palette, len(all_vars))
-        var_color_map = dict(zip(all_vars, var_colors))
+        var_color_map = resolve_palette(all_vars, base_palette=palette)
 
     # --- 2. FIGURA ---
     # "row" y "all" se delegan a matplotlib directamente.
@@ -1030,21 +1096,7 @@ def plot_quant_comparison_faceted(
         plt.savefig(save_path, format="pdf", bbox_inches="tight", dpi=300)
     plt.show()
 
-#########################################################################################################################################################
-
-# ---------------------------------------------------------------------------
-# Palette & theme constants
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-# Palette & theme constants
-# ---------------------------------------------------------------------------
-_DARK_BG     = "#0e1117"
-_CARD_BG     = "#1a1f2e"
-_RICH_COLORS = [
-    "#5B8CFF", "#FF6B6B", "#43E97B", "#FFD93D",
-    "#C77DFF", "#FF8C42", "#00D4FF", "#FF4D9E",
-]
- 
+######################################################################################################################################################### 
  
 def plot_quant_pie(df, columns, figsize=None, max_cols=3, title=None,
                    subplots_title=True, palette=None, min_pct_label=3.0,
@@ -1240,17 +1292,13 @@ def plot_cat_comparison_faceted(
     if group_by:
         group_vals = df[group_by].drop_nulls().cast(pl.String).unique().sort().to_list()
         resolved_hue_order = hue_order if hue_order else group_vals
-        fixed_palette = cat_palette if cat_palette else dict(
-            zip(group_vals, sns.color_palette(palette, len(group_vals)))
-        )
+        fixed_palette = resolve_palette(group_vals, base_palette=palette, override=cat_palette)
     else:
         all_cats = (
             df.select([pl.col(col).cast(pl.String) for col_group in comparisons for col in col_group])
             .to_pandas().stack().unique()
         )
-        fixed_palette = cat_palette if cat_palette else dict(
-            zip(sorted(all_cats), sns.color_palette(palette, len(all_cats)))
-        )
+        fixed_palette = resolve_palette(sorted(all_cats), base_palette=palette, override=cat_palette)
 
     # --- 1b. PRE-COMPUTE GLOBAL X ORDER FROM FULL DF ---
     # Keyed by (col_group tuple, col) for group_by branch, or (col_group tuple,) otherwise.
