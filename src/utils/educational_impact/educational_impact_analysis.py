@@ -365,11 +365,11 @@ def plot_quant_distribution(
 #########################################################################################################################################################
 
 def plot_quant_comparison(
-    df, comparisons, group_by=None, figsize=None, showfliers=True, 
-    order=None, labelbottom=True, xlabel_rotation=30, max_cols=3, 
-    title=None, palette="Set2", bbox_to_anchor=(0.5, -0.03), 
-    save_path=None):
-    
+    df, comparisons, group_by=None, figsize=None, showfliers=True,
+    order=None, labelbottom=True, xlabel_rotation=30, max_cols=3,
+    title=None, palette="Set2", bbox_to_anchor=(0.5, -0.03),
+    save_path=None, show_mean_lines=False):
+
     n_blocks = len(comparisons)
 
     if n_blocks == 0:
@@ -470,28 +470,96 @@ def plot_quant_comparison(
             ax_box.set_xticklabels(x_order_filtered)
 
         elif group_by and len(col_group) > 1:
+            n_groups = len(hue_order)
+
+            # show_mean_lines: add visual gap between group boxes
+            box_width = 0.35 if show_mean_lines else 0.5
+            gap_val   = 0.3  if show_mean_lines else 0.0
+
             sns.boxplot(
                 data=tidy, x="variable", y="valor",
                 hue=group_by, showfliers=showfliers,
                 palette=group_color_map, ax=ax_box,
-                width=0.5, linewidth=1.5,
+                width=box_width, linewidth=1.5,
                 legend=False, hue_order=hue_order,
-                order=col_group
+                order=col_group,
+                gap=gap_val
             )
+
+            # Exact seaborn center formula (verified empirically):
+            # offset_g = (g - (n_groups-1)/2) * (box_width / n_groups)
+            # gap only changes drawn box width, NOT center positions
+            mean_positions = {g: [] for g in hue_order}
+
             for j, col in enumerate(col_group):
                 for g, group_val in enumerate(hue_order):
                     mask = (tidy["variable"] == col) & (tidy[group_by] == group_val)
                     if mask.sum() == 0:
                         continue
                     mean_val = tidy.loc[mask, "valor"].mean()
-                    n_groups = len(hue_order)
-                    offset = (g - (n_groups - 1) / 2) * (0.5 / n_groups)
+                    offset = (g - (n_groups - 1) / 2) * (box_width / n_groups)
+                    x_pos = j + offset
+
                     ax_box.plot(
-                        j + offset, mean_val, marker="D",
+                        x_pos, mean_val, marker="D",
                         color=group_color_map[group_val],
                         markersize=6,
                         markeredgecolor="black", markeredgewidth=0.8,
                         zorder=5
+                    )
+                    mean_positions[group_val].append((x_pos, mean_val))
+
+            if show_mean_lines:
+                # --- DASHED LINES connecting means across variables per group ---
+                for group_val, pts in mean_positions.items():
+                    if len(pts) >= 2:
+                        xs = [p[0] for p in pts]
+                        ys = [p[1] for p in pts]
+                        ax_box.plot(
+                            xs, ys,
+                            color=group_color_map[group_val],
+                            linewidth=2, linestyle="--",
+                            zorder=4, alpha=0.85
+                        )
+
+                # --- VERTICAL LINE between the two group means at each variable ---
+                y_range = ax_box.get_ylim()[1] - ax_box.get_ylim()[0]
+                tick_w  = 0.015  # half-width of the horizontal end ticks (in x data units)
+
+                for j, col in enumerate(col_group):
+                    pts_at_j = [
+                        (mean_positions[g][j][0], mean_positions[g][j][1])
+                        for g in hue_order
+                        if j < len(mean_positions[g])
+                    ]
+                    if len(pts_at_j) < 2:
+                        continue
+
+                    x0, y0 = pts_at_j[0]   # first group
+                    x1, y1 = pts_at_j[1]   # second group
+                    x_mid  = (x0 + x1) / 2
+
+                    # Vertical line from mean0 to mean1
+                    ax_box.plot(
+                        [x_mid, x_mid], [y0, y1],
+                        color="black", lw=1.5, zorder=6
+                    )
+
+                    # Small horizontal ticks at each end of the line
+                    for y_end in [y0, y1]:
+                        ax_box.plot(
+                            [x_mid - tick_w, x_mid + tick_w], [y_end, y_end],
+                            color="black", lw=1.5, zorder=6
+                        )
+
+                    # Δ label just above the higher mean
+                    y_top = max(y0, y1)
+                    diff  = abs(y0 - y1)
+                    ax_box.text(
+                        x_mid, y_top + 0.02 * y_range,
+                        f"Δ={diff:.2f}",
+                        ha="center", va="bottom",
+                        fontsize=8, color="black", zorder=7
                     )
 
         else:
