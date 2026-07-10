@@ -153,6 +153,7 @@ def rename_df(
     
     df = df.with_columns(
         pl.col("chat_freq_use").replace(mapping_levels),
+        pl.col("chat_freq_use_v2").replace(mapping_levels),
         pl.col("puntuacion_tc_cat_pre").replace(mapping_levels),
         pl.col("puntuacion_tc_retencion_cat_pre").replace(mapping_levels),
         pl.col("puntuacion_tc_transferencia_cat_pre").replace(mapping_levels),
