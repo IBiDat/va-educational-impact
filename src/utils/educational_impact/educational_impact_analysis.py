@@ -42,6 +42,19 @@ GROUP_PALETTE = {
     "ExpBB": "#E78AC3",
 
     "ExpNotUsed": "#B3B3B3",     # Set2-7 — tan/beige
+    
+    "High": "#5B8CFF",     # Set2-7 — tan/beige
+    "Low": "#FF6B6B",     # Set2-7 — tan/beige
+    
+    "Not Used": "#B3B3B3",
+    "Out of context": "#FF7F00" ,
+    "Cheating": "#377EB8",
+    "Superficial": "#984EA3",
+    "Deep": "#4DAF4A",
+    
+    "Improve": "#9CFC65",
+    "Not Improve": "#46CEF0",
+    "Worsen": "#F8763A"   
 }
 
 def resolve_palette(keys, base_palette="Set2", override=None):
@@ -187,6 +200,45 @@ def group_stats(df, cols, group_by):
         ]
     ]
     return df.group_by(group_by).agg(stats)
+
+
+def compute_correlations(df: pl.DataFrame, col1: str, col2: str) -> dict:
+    """
+    Compute Pearson and Spearman correlation between two columns of a Polars DataFrame.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        Input dataframe.
+    col1 : str
+        Name of the first column.
+    col2 : str
+        Name of the second column.
+
+    Returns
+    -------
+    dict
+        Dictionary with pearson/spearman correlation coefficients and p-values.
+    """
+    # Drop rows where either column is null, keep only the two columns
+    clean_df = df.select([col1, col2]).drop_nulls()
+
+    x = clean_df[col1].to_numpy()
+    y = clean_df[col2].to_numpy()
+
+    pearson_r, pearson_p = stats.pearsonr(x, y)
+    spearman_r, spearman_p = stats.spearmanr(x, y)
+    
+    if pearson_r > spearman_r:
+        return {
+            "pearson_r": pearson_r,
+            "pearson_p": pearson_p
+        }
+    else:
+        return {
+            "spearman_r": spearman_r,
+            "spearman_p": spearman_p
+        }
 
 #########################################################################################################################################################
 
@@ -396,7 +448,6 @@ def plot_quant_comparison(
 
     if group_by:
         group_vals = df[group_by].drop_nulls().unique().sort().to_list()
-        hue_order = group_vals
         x_order_grouped = order if order else group_vals
         group_color_map = resolve_palette(x_order_grouped, base_palette=palette)
 
@@ -436,42 +487,8 @@ def plot_quant_comparison(
                 ax_box.set_title(title, fontsize=11, fontweight="bold", y=1.05)
 
         # --- BOXPLOT ---
-        if group_by and len(col_group) == 1:
-            x_order_filtered = [g for g in x_order_grouped if g in tidy[group_by].values]
-
-            for j, group_val in enumerate(x_order_filtered):
-                mask = tidy[group_by] == group_val
-                subset = tidy.loc[mask, "valor"].dropna()
-                if len(subset) == 0:
-                    continue
-
-                ax_box.boxplot(
-                    subset,
-                    positions=[j],
-                    widths=0.5,
-                    showfliers=showfliers,
-                    patch_artist=True,
-                    boxprops=dict(facecolor=group_color_map[group_val], alpha=0.7),
-                    medianprops=dict(color="black", linewidth=1.5),
-                    whiskerprops=dict(color="black"),
-                    capprops=dict(color="black"),
-                    flierprops=dict(marker='o', markerfacecolor=group_color_map[group_val], markersize=4, alpha=0.5)
-                )
-
-                mean_val = subset.mean()
-                ax_box.plot(
-                    j, mean_val, marker="D",
-                    color=group_color_map[group_val],
-                    markersize=6,
-                    markeredgecolor="black", markeredgewidth=0.8,
-                    zorder=5
-                )
-
-            ax_box.set_xticks(range(len(x_order_filtered)))
-            ax_box.set_xticklabels(x_order_filtered)
-
-        elif group_by and len(col_group) > 1:
-            n_groups = len(hue_order)
+        if group_by:
+            n_groups = len(x_order_grouped)
 
             # show_mean_lines: add visual gap between group boxes
             box_width = 0.35 if show_mean_lines else 0.5
@@ -482,7 +499,7 @@ def plot_quant_comparison(
                 hue=group_by, showfliers=showfliers,
                 palette=group_color_map, ax=ax_box,
                 width=box_width, linewidth=1.5,
-                legend=False, hue_order=hue_order,
+                legend=False, hue_order=x_order_grouped,
                 order=col_group,
                 gap=gap_val
             )
@@ -490,10 +507,10 @@ def plot_quant_comparison(
             # Exact seaborn center formula (verified empirically):
             # offset_g = (g - (n_groups-1)/2) * (box_width / n_groups)
             # gap only changes drawn box width, NOT center positions
-            mean_positions = {g: [] for g in hue_order}
+            mean_positions = {g: [] for g in x_order_grouped}
 
             for j, col in enumerate(col_group):
-                for g, group_val in enumerate(hue_order):
+                for g, group_val in enumerate(x_order_grouped):
                     mask = (tidy["variable"] == col) & (tidy[group_by] == group_val)
                     if mask.sum() == 0:
                         continue
@@ -518,7 +535,7 @@ def plot_quant_comparison(
                         ys = [p[1] for p in pts]
                         ax_box.plot(
                             xs, ys,
-                            color=group_color_map[group_val],
+                            color="black",
                             linewidth=2, linestyle="--",
                             zorder=4, alpha=0.85
                         )
@@ -530,7 +547,7 @@ def plot_quant_comparison(
                 for j, col in enumerate(col_group):
                     pts_at_j = [
                         (mean_positions[g][j][0], mean_positions[g][j][1])
-                        for g in hue_order
+                        for g in x_order_grouped
                         if j < len(mean_positions[g])
                     ]
                     if len(pts_at_j) < 2:
@@ -553,14 +570,14 @@ def plot_quant_comparison(
                             color="black", lw=1.5, zorder=6
                         )
 
-                    # Δ label just above the higher mean
+                    # Δ label above the higher mean
                     y_top = max(y0, y1)
                     diff  = abs(y0 - y1)
                     ax_box.text(
-                        x_mid, y_top + 0.02 * y_range,
+                        x_mid, y_top + 0.06 * y_range,
                         f"Δ={diff:.2f}",
                         ha="center", va="bottom",
-                        fontsize=8, color="black", zorder=7
+                        fontsize=11, color="black", zorder=7
                     )
 
         else:
@@ -590,7 +607,7 @@ def plot_quant_comparison(
 
     # --- 3. LEYENDA GLOBAL MANUAL ---
     if group_by:
-        legend_keys = x_order_grouped if len(comparisons[0]) == 1 else hue_order
+        legend_keys = x_order_grouped
         handles = [
             mpatches.Patch(color=group_color_map[g], alpha=0.7, label=str(g))
             for g in legend_keys if g in group_color_map
@@ -1557,3 +1574,4 @@ def plot_cat_comparison_faceted(
     if save_path:
         plt.savefig(save_path, format="pdf", bbox_inches="tight", dpi=300)
     plt.show()
+    
