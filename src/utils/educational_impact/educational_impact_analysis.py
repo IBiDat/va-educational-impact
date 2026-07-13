@@ -478,7 +478,7 @@ def plot_quant_comparison(
         if title is True:
             block_title = " vs ".join(col.upper() for col in col_group)
             if group_by:
-                block_title += f"\n(por {group_by})"
+                block_title += f"\n(by {group_by})"
             if not showfliers:
                 block_title += "\n(Outliers Hidden)"
             ax_box.set_title(block_title, fontsize=11, fontweight="bold", y=1.05)
@@ -811,11 +811,11 @@ def plot_cat_comparison(
         if subplots_title:
             block_title = " vs ".join(col.upper() for col in col_group)
             if group_by:
-                block_title += f"\n(por {group_by})"
+                block_title += f"\n(by {group_by})"
             ax.set_title(block_title, fontsize=11, fontweight="bold")
 
         ax.set_xlabel("")
-        ax.set_ylabel("Proporción condicional")
+        ax.set_ylabel("Conditional proportion")
         ax.tick_params(axis='x', rotation=x_rotation, labelsize=10)
 
     # --- 4. LEYENDA GLOBAL MANUAL ---
@@ -910,7 +910,7 @@ def plot_quant_scatter(
         if subplots_title:
             block_title = f"{x_col.upper()} vs {y_col.upper()}"
             if group_by:
-                block_title += f"\n(por {group_by})"
+                block_title += f"\n(by {group_by})"
             ax.set_title(block_title, fontsize=11, fontweight="bold", y=1.02)
 
         # --- SCATTER + REGRESIÓN ---
@@ -1538,7 +1538,7 @@ def plot_cat_comparison_faceted(
                     fontsize=9, labelpad=6,
                 )
             else:
-                ax.set_ylabel("Proporción condicional" if c == 0 else "")
+                ax.set_ylabel("Conditional proportion" if c == 0 else "")
 
             ax.set_xlabel("")
             ax.tick_params(axis="x", rotation=x_rotation, labelsize=10)
