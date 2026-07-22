@@ -229,16 +229,16 @@ def compute_correlations(df: pl.DataFrame, col1: str, col2: str) -> dict:
     pearson_r, pearson_p = stats.pearsonr(x, y)
     spearman_r, spearman_p = stats.spearmanr(x, y)
     
-    if pearson_r > spearman_r:
-        return {
+    return {
+        "pearson": {
             "pearson_r": pearson_r,
             "pearson_p": pearson_p
-        }
-    else:
-        return {
+        },
+        "spearman": {
             "spearman_r": spearman_r,
             "spearman_p": spearman_p
         }
+    }
 
 #########################################################################################################################################################
 
@@ -860,10 +860,26 @@ def plot_cat_comparison(
     plt.show()
 #########################################################################################################################################################
 
+def resolve_block_color(x_col, y_col, default_color, tab10):
+    """
+    Decide the color for a comparison block based on column names.
+    - If 'retention' appears in x_col or y_col -> tab10 color index 1
+    - Else if 'transfer' appears in x_col or y_col -> tab10 color index 1
+    - Otherwise -> default_color (the palette-assigned color)
+    """
+    x_low, y_low = x_col.lower(), y_col.lower()
+    if "retention" in x_low or "retention" in y_low:
+        return tab10[1]
+    if "transfer" in x_low or "transfer" in y_low:
+        return tab10[2]
+    return default_color
+
+
 def plot_quant_scatter(
     df, comparisons, group_by=None, figsize=None,
     order=None, max_cols=3, title=None, subplots_title=True,
     palette="Set2", alpha=0.6, show_regression=True, corr_annotation=True,
+    use_legend=False,
     bbox_to_anchor=(0.5, -0.03), save_path=None
 ):
 
@@ -871,6 +887,8 @@ def plot_quant_scatter(
     if n_blocks == 0:
         print("Aviso: La lista de comparaciones está vacía.")
         return
+
+    tab10 = sns.color_palette("tab10", 10)
 
     # --- 1. LAYOUT ---
     n_cols_fig = min(n_blocks, max_cols)
@@ -921,6 +939,7 @@ def plot_quant_scatter(
                 if sub.empty:
                     continue
                 color = group_color_map[g]
+                color = resolve_block_color(x_col, y_col, color, tab10)
                 ax.scatter(sub[x_col], sub[y_col],
                            color=color, alpha=alpha, s=25,
                            linewidths=0, label=str(g), zorder=3)
@@ -933,6 +952,7 @@ def plot_quant_scatter(
             r_val, p_val = stats.pearsonr(pdf[x_col], pdf[y_col])
         else:
             color = pair_colors[i]
+            color = resolve_block_color(x_col, y_col, color, tab10)
             ax.scatter(pdf[x_col], pdf[y_col],
                        color=color, alpha=alpha, s=25,
                        linewidths=0, zorder=3)
@@ -970,17 +990,20 @@ def plot_quant_scatter(
         ]
     else:
         handles = [
-            mpatches.Patch(color=pair_colors[j], alpha=0.8,
-                           label=f"{x} vs {y}")
+            mpatches.Patch(
+                color=resolve_block_color(x, y, pair_colors[j], tab10),
+                alpha=0.8, label=f"{x} vs {y}"
+            )
             for j, (x, y) in enumerate(comparisons)
         ]
 
-    fig.legend(handles=handles,
-               loc="lower center",
-               ncol=len(handles),
-               fontsize=9,
-               frameon=True,
-               bbox_to_anchor=bbox_to_anchor)
+    if use_legend:
+        fig.legend(handles=handles,
+                loc="lower center",
+                ncol=len(handles),
+                fontsize=9,
+                frameon=True,
+                bbox_to_anchor=bbox_to_anchor)
 
     # --- 5. LIMPIAR SUBPLOTS VACÍOS ---
     total = n_rows_fig * n_cols_fig
@@ -1574,4 +1597,392 @@ def plot_cat_comparison_faceted(
     if save_path:
         plt.savefig(save_path, format="pdf", bbox_inches="tight", dpi=300)
     plt.show()
+
+def plot_cat_comparison_heatmap(
+    df,
+    comparisons,
+    group_by,
+    order=None,
+    hue_order=None,
+    cmap="RdYlGn",
+    figsize=None,
+    sharey=True,
+    x_rotation=30,
+    subplots_title=True,
+    title=None,
+    show_counts=True,
+    annot_fmt=".2f",
+    vmin=0,
+    vmax=1,
+    cbar=True,
+    save_path=None,
+):
+    """
+    Same visual structure as plot_cat_comparison_faceted_heatmap (grid of
+    heatmap subplots, column titles on top, row labels on the left, shared
+    row order, percentage annotations), but instead of faceting by an
+    outer_group_by value, the columns of the SUBPLOT GRID are the different
+    VARIABLES being compared (e.g. pre vs post), flattened out of `comparisons`.
+
+    Within each subplot:
+      - rows    = category values of that variable (following `order` /
+                  global frequency order), shared across all subplots
+      - columns = group_by values (following `hue_order` / group values)
+      - color   = conditional proportion of that category value within that
+                  group_by value, i.e. P(row_value | group_by value)
+      - annotated cell text = that same proportion as a percentage
+        (if show_counts=True)
+
+    Parameters
+    ----------
+    comparisons : list[list[str]]
+        Each inner list is a block; all columns across all blocks are
+        flattened into one subplot per column, in order.
+    group_by : str
+        Column whose values become the heatmap's columns within each subplot.
+    """
+
+    # --- 0. FLATTEN VARIABLES (these become the subplot grid columns) ---
+    variables = [col for col_group in comparisons for col in col_group]
+    n_cols = len(variables)
+    n_rows = 1
+
+    if n_cols == 0:
+        print("Aviso: comparisons está vacío.")
+        return
+
+    # --- 1. GROUP VALS / ORDER (heatmap columns within each subplot) ---
+    group_vals = df[group_by].drop_nulls().cast(pl.String).unique().sort().to_list()
+    resolved_hue_order = hue_order if hue_order else group_vals
+
+    # --- 1b. PRE-COMPUTE GLOBAL ROW ORDER (category values) PER VARIABLE ---
+    global_row_orders = {}
+    for col in variables:
+        if order:
+            global_row_orders[col] = order
+        else:
+            serie = df[col].fill_null("Nulo").cast(pl.String).to_pandas()
+            global_row_orders[col] = (
+                serie.value_counts().sort_values(ascending=False).index.tolist()
+            )
+
+    # --- 2. FIGURA ---
+    fig, axes = plt.subplots(
+        nrows=n_rows,
+        ncols=n_cols,
+        figsize=(4.5 * n_cols, 4.5 * n_rows) if figsize is None else figsize,
+        sharey=sharey,
+        squeeze=False,
+    )
+
+    # --- 3. TÍTULOS DE COLUMNA (uno por variable) ---
+    for c, col in enumerate(variables):
+        if subplots_title:
+            axes[0, c].set_title(
+                col.upper(),
+                fontsize=11, fontweight="bold", pad=8,
+            )
+
+    # --- 4. DIBUJAR ---
+    for c, col in enumerate(variables):
+        ax = axes[0, c]
+        row_order = global_row_orders[col]
+
+        pdf = df.select([col, group_by]).to_pandas()
+        pdf[col] = pdf[col].fillna("Nulo").astype(str)
+
+        prop = (
+            pdf.groupby([group_by, col])
+            .size()
+            .reset_index(name="n")
+        )
+        prop["proporcion"] = prop.groupby(group_by)["n"].transform(
+            lambda x: x / x.sum()
+        )
+
+        pivot_prop = (
+            prop.pivot(index=col, columns=group_by, values="proporcion")
+            .reindex(index=row_order, columns=resolved_hue_order)
+            .fillna(0.0)
+        )
+        pivot_n = (
+            prop.pivot(index=col, columns=group_by, values="n")
+            .reindex(index=row_order, columns=resolved_hue_order)
+            .fillna(0)
+        )
+
+        annot = None
+        if show_counts:
+            annot = pivot_prop.apply(
+                lambda col_: col_.map(lambda v: f"{v * 100:.1f}%")
+            )
+
+        sns.heatmap(
+            pivot_prop,
+            ax=ax,
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax,
+            annot=annot if show_counts else True,
+            fmt="" if show_counts else annot_fmt,
+            cbar=cbar,
+            linewidths=0.5,
+            linecolor="white",
+        )
+
+        if c == 0:
+            ax.set_ylabel(group_by, fontsize=9, labelpad=6)
+        else:
+            ax.set_ylabel("")
+
+        ax.set_xlabel("")
+        ax.tick_params(axis="x", rotation=x_rotation, labelsize=10)
+        ax.tick_params(axis="y", labelsize=10)
+
+    if title:
+        fig.suptitle(title, fontsize=15, fontweight="bold", y=1.02)
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, format="pdf", bbox_inches="tight", dpi=300)
+    plt.show()
     
+
+def plot_cat_comparison_faceted_heatmap(
+    df,
+    comparisons,
+    outer_group_by,
+    group_by=None,
+    outer_order=None,
+    order=None,
+    hue_order=None,
+    cmap="RdYlGn",
+    figsize=None,
+    sharey=False,
+    x_rotation=30,
+    subplots_title=True,
+    title=None,
+    show_counts=True,
+    annot_fmt=".2f",
+    vmin=0,
+    vmax=1,
+    cbar=True,
+    save_path=None,
+):
+    """
+    Heatmap version of plot_cat_comparison_faceted.
+ 
+    For each comparison (row of the subplot grid) x outer_group_by value (column
+    of the subplot grid), draws a heatmap where:
+      - rows    = category values of `col` (following `order` / global frequency order)
+      - columns = group_by values (following `hue_order` / group values)
+      - color   = conditional proportion of that category value within that group
+                  (i.e. P(col_value | group_by value), same quantity as the bars in
+                  the original barplot version), on a red (low) -> yellow -> green
+                  (high) scale
+      - annotated cell text = that same conditional proportion, formatted as a
+        percentage (if show_counts=True). 0% cells are shown explicitly rather
+        than left blank.
+ 
+    Only the group_by branch is implemented in full generality (matches the
+    requested use case: comparisons=[[col]], group_by=grupo_segmented_v4). If
+    group_by is None, falls back to a single-column heatmap of variable vs value
+    proportions (marginal, not conditional on a group).
+    """
+ 
+    # --- 0. OUTER VALS ---
+    outer_vals = (
+        outer_order
+        if outer_order is not None
+        else df[outer_group_by].drop_nulls().cast(pl.String).unique().sort().to_list()
+    )
+ 
+    n_cols = len(outer_vals)
+    n_rows = len(comparisons)
+ 
+    if n_cols == 0 or n_rows == 0:
+        print("Aviso: comparisons u outer_group_by están vacíos.")
+        return
+ 
+    # --- 1. GROUP VALS / ORDER ---
+    if group_by:
+        group_vals = df[group_by].drop_nulls().cast(pl.String).unique().sort().to_list()
+        resolved_hue_order = hue_order if hue_order else group_vals
+ 
+    # --- 1b. PRE-COMPUTE GLOBAL ROW ORDER (category values) FROM FULL DF ---
+    global_col_orders = {}
+    for col_group in comparisons:
+        key = tuple(col_group)
+        if order:
+            if group_by:
+                for col in col_group:
+                    global_col_orders[(key, col)] = order
+            else:
+                global_col_orders[key] = order
+        elif group_by:
+            for col in col_group:
+                serie = df[col].fill_null("Nulo").cast(pl.String).to_pandas()
+                global_col_orders[(key, col)] = (
+                    serie.value_counts().sort_values(ascending=False).index.tolist()
+                )
+        else:
+            tidy = pd.concat(
+                [df[col].fill_null("Nulo").cast(pl.String).to_pandas().rename("valor")
+                 for col in col_group],
+                ignore_index=True,
+            )
+            global_col_orders[key] = (
+                tidy.value_counts().sort_values(ascending=False).index.tolist()
+            )
+ 
+    # --- 2. FIGURA ---
+    fig, axes = plt.subplots(
+        nrows=n_rows,
+        ncols=n_cols,
+        figsize=(4.5 * n_cols, 4.5 * n_rows) if figsize is None else figsize,
+        sharey=sharey,
+        squeeze=False,
+    )
+ 
+    # --- 3. TÍTULOS DE COLUMNA ---
+    for c, val in enumerate(outer_vals):
+        axes[0, c].set_title(
+            f"{outer_group_by} = {val}",
+            fontsize=11, fontweight="bold", pad=8,
+        )
+ 
+    last_heatmap_mesh = None
+ 
+    # --- 4. DIBUJAR ---
+    for r, col_group in enumerate(comparisons):
+        key = tuple(col_group)
+        for c, val in enumerate(outer_vals):
+            ax = axes[r, c]
+            df_sub = df.filter(pl.col(outer_group_by).cast(pl.String) == str(val))
+ 
+            if group_by:
+                # Only supports single-column comparisons cleanly for a 2D heatmap;
+                # if multiple cols are given in a group, stack them vertically.
+                pivot_frames = []
+                n_frames = []
+                row_labels_all = []
+ 
+                for col in col_group:
+                    row_order = global_col_orders[(key, col)]
+ 
+                    pdf = df_sub.select([col, group_by]).to_pandas()
+                    pdf[col] = pdf[col].fillna("Nulo").astype(str)
+ 
+                    prop = (
+                        pdf.groupby([group_by, col])
+                        .size()
+                        .reset_index(name="n")
+                    )
+                    prop["proporcion"] = prop.groupby(group_by)["n"].transform(
+                        lambda x: x / x.sum()
+                    )
+ 
+                    pivot_prop = (
+                        prop.pivot(index=col, columns=group_by, values="proporcion")
+                        .reindex(index=row_order, columns=resolved_hue_order)
+                    )
+                    pivot_n = (
+                        prop.pivot(index=col, columns=group_by, values="n")
+                        .reindex(index=row_order, columns=resolved_hue_order)
+                    )
+ 
+                    pivot_frames.append(pivot_prop)
+                    n_frames.append(pivot_n)
+                    row_labels_all.extend(row_order)
+ 
+                prop_matrix = pd.concat(pivot_frames, axis=0).fillna(0.0)
+                n_matrix = pd.concat(n_frames, axis=0).fillna(0)
+ 
+                annot = None
+                if show_counts:
+                    annot = prop_matrix.apply(
+                        lambda col_: col_.map(lambda v: f"{v * 100:.1f}%")
+                    )
+ 
+                hm = sns.heatmap(
+                    prop_matrix,
+                    ax=ax,
+                    cmap=cmap,
+                    vmin=vmin,
+                    vmax=vmax,
+                    annot=annot if show_counts else True,
+                    fmt="" if show_counts else annot_fmt,
+                    cbar=cbar,
+                    linewidths=0.5,
+                    linecolor="white",
+                )
+                last_heatmap_mesh = hm.collections[0] if hm.collections else last_heatmap_mesh
+ 
+            else:
+                col_order = global_col_orders[key]
+ 
+                frames = []
+                for col in col_group:
+                    serie = df_sub[col].fill_null("Nulo").cast(pl.String).to_pandas()
+                    frames.append(pd.DataFrame({"valor": serie, "variable": col}))
+                tidy = pd.concat(frames, ignore_index=True)
+ 
+                prop = (
+                    tidy.groupby(["variable", "valor"])
+                    .size()
+                    .reset_index(name="n")
+                )
+                prop["proporcion"] = prop.groupby("variable")["n"].transform(
+                    lambda x: x / x.sum()
+                )
+ 
+                pivot_prop = (
+                    prop.pivot(index="valor", columns="variable", values="proporcion")
+                    .reindex(index=col_order, columns=col_group)
+                    .fillna(0.0)
+                )
+                pivot_n = (
+                    prop.pivot(index="valor", columns="variable", values="n")
+                    .reindex(index=col_order, columns=col_group)
+                    .fillna(0)
+                )
+ 
+                annot = None
+                if show_counts:
+                    annot = pivot_prop.apply(
+                        lambda col_: col_.map(lambda v: f"{v * 100:.1f}%")
+                    )
+ 
+                hm = sns.heatmap(
+                    pivot_prop,
+                    ax=ax,
+                    cmap=cmap,
+                    vmin=vmin,
+                    vmax=vmax,
+                    annot=annot if show_counts else True,
+                    fmt="" if show_counts else annot_fmt,
+                    cbar=cbar,
+                    linewidths=0.5,
+                    linecolor="white",
+                )
+                last_heatmap_mesh = hm.collections[0] if hm.collections else last_heatmap_mesh
+ 
+            if subplots_title and c == 0:
+                ax.set_ylabel(
+                    " vs ".join(col.upper() for col in col_group),
+                    fontsize=9, labelpad=6,
+                )
+            else:
+                ax.set_ylabel("")
+ 
+            ax.set_xlabel("")
+            ax.tick_params(axis="x", rotation=x_rotation, labelsize=10)
+            ax.tick_params(axis="y", labelsize=10)
+ 
+    if title:
+        fig.suptitle(title, fontsize=15, fontweight="bold", y=1.02)
+ 
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, format="pdf", bbox_inches="tight", dpi=300)
+    plt.show()
