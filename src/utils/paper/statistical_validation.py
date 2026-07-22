@@ -20,7 +20,9 @@ Tests:
   * categorical   -> Chi-square                + Cramér's V (+ best/worst group)
 
 Every result stores a common 0–1 `strength` (|rank-biserial| of the biggest contrast, or
-Cramér's V) so all figures can be ranked against each other at the end.
+Cramér's V) so all figures can be ranked against each other at the end. In addition,
+every registered result carries the raw test statistic (U / H / χ²) and, when relevant,
+its degrees of freedom, so they show up in `summary()`.
 """
 from __future__ import annotations
 import itertools
@@ -29,10 +31,12 @@ import polars as pl
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
 from statsmodels.stats.contingency_tables import SquareTable
+
 ALPHA = 0.05
 RESULTS: list[dict] = []
 TRAD = ['Excellent', 'Very Good', 'Good', 'Pass', 'Fail']            # best → worst
 GRADE_RANK = {c: (len(TRAD) - 1 - i) for i, c in enumerate(TRAD)}    # Excellent=4 … Fail=0
+
 
 def reset_results():
     RESULTS.clear()
@@ -69,9 +73,10 @@ def _mag_eps(e):
 
 
 def _rb(a, b):
-    """rank-biserial for (a vs b): >0 means a stochastically larger than b."""
+    """Mann-Whitney between a and b. Returns (U, p, rank-biserial).
+    rank-biserial > 0 means a is stochastically larger than b."""
     U, p = stats.mannwhitneyu(a, b, alternative="two-sided")
-    return 2 * U / (len(a) * len(b)) - 1, p
+    return U, p, 2 * U / (len(a) * len(b)) - 1
 
 
 def _reg(**kw):
@@ -89,7 +94,7 @@ def diff_2(figure, grouping, metric_label, df, group, g1, g2,
     if len(a) < 3 or len(b) < 3:
         print(f"█ {figure}: [skip] insufficient data (n={len(a)},{len(b)})\n")
         return
-    rb, p = _rb(a, b)
+    U, p, rb = _rb(a, b)
     m1, m2 = float(np.median(a)), float(np.median(b))
     higher = g1 if rb > 0 else g2
     mag = _mag_r(rb)
@@ -100,7 +105,8 @@ def diff_2(figure, grouping, metric_label, df, group, g1, g2,
         print(f"   Q: is the improvement different between {g1} and {g2}?")
     print(f"   Mann-Whitney U   n={len(a)+len(b)}   "
           f"median {g1}={m1:+.3f} vs {g2}={m2:+.3f}  (Δ={m1-m2:+.3f})")
-    print(f"   p = {p:.4f} {_sig(p)}   rank-biserial r = {rb:+.3f} ({mag})")
+    print(f"   U = {U:.1f}   p = {p:.4f} {_sig(p)}   "
+          f"rank-biserial r = {rb:+.3f} ({mag})")
     if baseline:
         verdict = ("⚠ groups DIFFER at baseline — potential confound." if p < ALPHA
                    else "baseline balanced (no significant difference).")
@@ -109,7 +115,8 @@ def diff_2(figure, grouping, metric_label, df, group, g1, g2,
                    else f"no significant between-group difference ({mag} effect).")
     print(f"   → {verdict}\n")
     _reg(figure=figure, grouping=group, metric=metric_label, test="Mann-Whitney U",
-         n=len(a) + len(b), p=p, effect_name="rank-biserial r", effect_value=rb,
+         n=len(a) + len(b), statistic=U, statistic_name="U",
+         p=p, effect_name="rank-biserial r", effect_value=rb,
          magnitude=mag, strength=abs(rb), biggest_contrast=f"{g1} vs {g2}",
          top_group=higher)
 
@@ -146,22 +153,23 @@ def diff_k(figure, grouping, metric_label, df, group, order=None,
     pairs = list(itertools.combinations(range(k), 2))
     rows, praw = [], []
     for i, j in pairs:
-        rb, pp = _rb(groups[i], groups[j])
-        rows.append((labels[i], labels[j], rb, pp))
+        U_ij, pp, rb = _rb(groups[i], groups[j])
+        rows.append((labels[i], labels[j], rb, pp, U_ij))
         praw.append(pp)
     padj = multipletests(praw, method="holm")[1] if praw else []
     biggest = max(range(len(rows)), key=lambda t: abs(rows[t][2])) if rows else None
 
     print(f"█ {figure}   ·  grouping: {group}   ·  metric: {metric_label}")
     print(f"   Q: does {metric_label} differ across the {k} groups?")
-    print(f"   Kruskal-Wallis   H={H:.3f}, df={k-1}, n={n}   "
+    print(f"   Kruskal-Wallis   H = {H:.3f}, df = {k-1}, n = {n}   "
           f"p = {p:.4f} {_sig(p)}   ε² = {eps:.3f} ({_mag_eps(eps)})")
     print(f"   group medians: " + ", ".join(f"{l}={v:+.3f}" for l, v in meds.items()))
     print(f"   highest: {top} ({meds[top]:+.3f})   |   lowest: {bot} ({meds[bot]:+.3f})")
     if biggest is not None:
-        c1, c2, rb, _ = rows[biggest]
-        print(f"   BIGGEST pairwise difference: {c1} vs {c2}  "
-              f"r={rb:+.3f} ({_mag_r(rb)}), p-Holm={padj[biggest]:.4f} {_sig(padj[biggest])}")
+        c1, c2, rb, _, U_b = rows[biggest]
+        print(f"   BIGGEST pairwise difference: {c1} vs {c2}   "
+              f"U = {U_b:.1f}, r = {rb:+.3f} ({_mag_r(rb)}), "
+              f"p-Holm = {padj[biggest]:.4f} {_sig(padj[biggest])}")
         sig_pairs = [(rows[t][0], rows[t][1], rows[t][2], padj[t])
                      for t in range(len(rows)) if padj[t] < ALPHA]
         if sig_pairs:
@@ -171,9 +179,10 @@ def diff_k(figure, grouping, metric_label, df, group, order=None,
         else:
             print("   (no pair survives Holm correction)")
     print()
-    c1, c2, rb, _ = rows[biggest]
+    c1, c2, rb, _, _ = rows[biggest]
     _reg(figure=figure, grouping=group, metric=metric_label, test="Kruskal-Wallis",
-         n=n, p=p, effect_name="epsilon^2", effect_value=eps, magnitude=_mag_eps(eps),
+         n=n, statistic=H, statistic_name="H", dof=k - 1,
+         p=p, effect_name="epsilon^2", effect_value=eps, magnitude=_mag_eps(eps),
          strength=abs(rb), biggest_contrast=f"{c1} vs {c2} (r={rb:+.2f})", top_group=top)
 
 
@@ -214,7 +223,7 @@ def diff_cat(figure, grouping, df, cat, group, positive="Improve", order=None):
 
     print(f"█ {figure}   ·  grouping: {group}   ·  metric: {cat} (proportions)")
     print(f"   Q: does the improvement-category mix differ between groups?")
-    print(f"   Chi-square   χ²={chi2:.3f}, df={dof}, n={int(table.sum())}   "
+    print(f"   Chi-square   χ² = {chi2:.3f}, df = {dof}, n = {int(table.sum())}   "
           f"p = {p:.4f} {_sig(p)}   Cramér's V = {v:.3f} ({_mag_r(v)})")
     if pos_rate:
         print("   %" + positive + " by group: " +
@@ -227,7 +236,9 @@ def diff_cat(figure, grouping, df, cat, group, positive="Improve", order=None):
                else "No significant difference in the improvement mix.")
     print(f"   → {verdict}\n")
     _reg(figure=figure, grouping=group, metric=f"{cat} proportions",
-         test="Chi-square", n=int(table.sum()), p=p, effect_name="Cramér's V",
+         test="Chi-square", n=int(table.sum()),
+         statistic=chi2, statistic_name="chi2", dof=dof,
+         p=p, effect_name="Cramér's V",
          effect_value=v, magnitude=_mag_r(v), strength=v,
          biggest_contrast=f"{best} vs {worst} (%{positive})", top_group=best)
 
@@ -245,7 +256,7 @@ def matthew(figure, df, pre, post, low_max=0.5, high_min=0.7):
     if len(gh) < 3 or len(gl) < 3:
         print(f"█ {figure}: [skip] insufficient High/Low data\n")
         return
-    rb, p = _rb(gh, gl)   # >0 => High gained more
+    U, p, rb = _rb(gh, gl)   # >0 => High gained more
     gap_pre = float(np.median(_num(d, pre, pl.col("_lvl") == "High")) -
                     np.median(_num(d, pre, pl.col("_lvl") == "Low")))
     gap_post = float(np.median(_num(d, post, pl.col("_lvl") == "High")) -
@@ -261,11 +272,13 @@ def matthew(figure, df, pre, post, low_max=0.5, high_min=0.7):
     print(f"   Mann-Whitney U   n={len(gh)+len(gl)}   "
           f"gain High={np.median(gh):+.3f} vs Low={np.median(gl):+.3f}")
     print(f"   gap High−Low: pre={gap_pre:+.3f} → post={gap_post:+.3f}")
-    print(f"   p = {p:.4f} {_sig(p)}   rank-biserial r = {rb:+.3f} ({mag})")
+    print(f"   U = {U:.1f}   p = {p:.4f} {_sig(p)}   "
+          f"rank-biserial r = {rb:+.3f} ({mag})")
     print(f"   → {verdict}\n")
     _reg(figure=figure, grouping="High vs Low", metric="raw gain",
-         test="Mann-Whitney U", n=len(gh) + len(gl), p=p,
-         effect_name="rank-biserial r", effect_value=rb, magnitude=mag,
+         test="Mann-Whitney U", n=len(gh) + len(gl),
+         statistic=U, statistic_name="U",
+         p=p, effect_name="rank-biserial r", effect_value=rb, magnitude=mag,
          strength=abs(rb), biggest_contrast="High vs Low",
          top_group="High" if rb > 0 else "Low")
 
@@ -281,12 +294,22 @@ def summary():
     df = pd.DataFrame(RESULTS)
     df["p_holm"] = multipletests(df["p"].values, method="holm")[1]
     df = df.sort_values("strength", ascending=False).reset_index(drop=True)
-    show = df[["figure", "grouping", "test", "n", "p", "p_holm", "effect_name",
-               "effect_value", "magnitude", "strength", "biggest_contrast", "top_group"]]
-    with pd.option_context("display.max_rows", None, "display.width", 240,
+
+    # ensure the new columns exist even if a row didn't set them
+    for col, default in [("statistic", np.nan), ("statistic_name", "-"), ("dof", np.nan)]:
+        if col not in df.columns:
+            df[col] = default
+
+    show = df[["figure", "grouping", "test",
+               "statistic_name", "statistic", "dof",
+               "n", "p", "p_holm",
+               "effect_name", "effect_value", "magnitude",
+               "strength", "biggest_contrast", "top_group"]]
+    with pd.option_context("display.max_rows", None, "display.width", 260,
                            "display.max_colwidth", 40,
                            "display.float_format", lambda v: f"{v:.4f}"):
-        print("Ranked by between-group effect size (strength = |r| of biggest contrast, or V):\n")
+        print("Ranked by between-group effect size "
+              "(strength = |r| of biggest contrast, or V):\n")
         print(show.to_string(index=False))
     sig = df[df["p"] < ALPHA]
     print("\n" + "=" * 70)
@@ -297,6 +320,7 @@ def summary():
     if sig.empty:
         print("  (none reached significance)")
     return df
+
 
 # =====================================================================
 # PAIRED within-subject tests  (same students, pre vs post)
@@ -309,12 +333,11 @@ def _matched_rc(diff):
     ranks = stats.rankdata(np.abs(nz))
     return float(np.sum(np.sign(nz) * ranks) / np.sum(ranks))
 
+
 # =====================================================================
 # analyze if the distribution has changed pre→post (paired categorical / ordinal)
 # =====================================================================
-
 def paired_distribution(figure, grouping, df, pre, post, order, filt=None):
-
     """Stuart-Maxwell marginal homogeneity: did the DISTRIBUTION move pre→post?
     (paired categorical / ordinal — same students measured twice)."""
     d = df if filt is None else df.filter(filt)
@@ -351,17 +374,20 @@ def paired_distribution(figure, grouping, df, pre, post, order, filt=None):
     for c, pm, qm in zip(cats, pre_marg, post_marg):
         print(f"   {c:>12} | {pm*100:5.1f}  {qm*100:5.1f}  {(qm-pm)*100:+5.1f}")
     print(f"   Stuart-Maxwell (marginal homogeneity)   n={n}   "
-          f"χ²={stat_v:.3f}, df={dfree}   p = {p:.4f} {_sig(p)}")
+          f"χ² = {stat_v:.3f}, df = {dfree}   p = {p:.4f} {_sig(p)}")
     print(f"   ordinal shift r_c = {rc:+.3f} ({mag})")
     verdict = (f"distribution shifted {'toward better' if rc > 0 else 'toward worse'} grades ({mag})."
                if (p is not None and not np.isnan(p) and p < ALPHA)
                else "no significant change in the grade distribution.")
     print(f"   → {verdict}\n")
     _reg(figure=figure, grouping=grouping, metric="grade distribution",
-         test="Stuart-Maxwell", n=n, p=p, effect_name="rank-biserial r_c",
+         test="Stuart-Maxwell", n=n,
+         statistic=stat_v, statistic_name="chi2", dof=dfree,
+         p=p, effect_name="rank-biserial r_c",
          effect_value=rc, magnitude=mag, strength=abs(rc),
-         biggest_contrast="pre-dist vs post-dist", top_group=("post" if rc > 0 else "pre"), design="within-subject")
-    
+         biggest_contrast="pre-dist vs post-dist",
+         top_group=("post" if rc > 0 else "pre"), design="within-subject")
+
 
 def _mag(v):
     a = abs(v)
@@ -411,12 +437,18 @@ def test_expa_trad_scale(df, target="ExpA",
     chi2_pre, p_pre, dof_pre, exp_pre = stats.chi2_contingency(tbl_pre)
     v_pre = _cramers_v(chi2_pre, tbl_pre)
     _print_pct(tbl_pre, g_levels, b_levels, "PRE distribution")
-    print(f"     Chi² = {chi2_pre:.3f}, df = {dof_pre}, n = {int(tbl_pre.sum())}   "
+    print(f"     χ² = {chi2_pre:.3f}, df = {dof_pre}, n = {int(tbl_pre.sum())}   "
           f"p = {p_pre:.4f} {_sig(p_pre)}   Cramer's V = {v_pre:.3f} ({_mag(v_pre)})")
     if (exp_pre < 5).mean() > 0:
         print(f"     note: {(exp_pre<5).mean()*100:.0f}% of cells expected <5 (χ² approximate)")
     print("     → " + ("baseline HOMOGENEOUS ✓" if p_pre >= ALPHA
                        else "⚠ baseline NOT homogeneous — groups start with different distributions"))
+    _reg(figure="pre_post_trad_scale.pdf [pre homogeneity]", grouping=group_col,
+         metric="grade distribution (pre)", test="Chi-square",
+         n=int(tbl_pre.sum()), statistic=chi2_pre, statistic_name="chi2", dof=dof_pre,
+         p=p_pre, effect_name="Cramér's V", effect_value=v_pre,
+         magnitude=_mag(v_pre), strength=v_pre,
+         biggest_contrast="pre-distribution across groups", top_group="-")
 
     # (2a) POST omnibus
     print("\n(2a) POST — do the 4 groups differ overall at post?")
@@ -425,12 +457,18 @@ def test_expa_trad_scale(df, target="ExpA",
     chi2_post, p_post, dof_post, exp_post = stats.chi2_contingency(tbl_post)
     v_post = _cramers_v(chi2_post, tbl_post)
     _print_pct(tbl_post, g_levels_p, b_levels_p, "POST distribution")
-    print(f"     Chi² = {chi2_post:.3f}, df = {dof_post}, n = {int(tbl_post.sum())}   "
+    print(f"     χ² = {chi2_post:.3f}, df = {dof_post}, n = {int(tbl_post.sum())}   "
           f"p = {p_post:.4f} {_sig(p_post)}   Cramer's V = {v_post:.3f} ({_mag(v_post)})")
     if (exp_post < 5).mean() > 0:
         print(f"     note: {(exp_post<5).mean()*100:.0f}% of cells expected <5")
     print("     → " + ("post distribution DIFFERS across groups ✓" if p_post < ALPHA
                        else "no significant overall difference at post"))
+    _reg(figure="pre_post_trad_scale.pdf [post omnibus]", grouping=group_col,
+         metric="grade distribution (post)", test="Chi-square",
+         n=int(tbl_post.sum()), statistic=chi2_post, statistic_name="chi2", dof=dof_post,
+         p=p_post, effect_name="Cramér's V", effect_value=v_post,
+         magnitude=_mag(v_post), strength=v_post,
+         biggest_contrast="post-distribution across groups", top_group="-")
 
     # (2b) POST: ExpA vs each other v4 level on the ordinal grade rank
     print(f"\n(2b) POST — does '{target}' hold BETTER grades than each other group?")
@@ -438,7 +476,8 @@ def test_expa_trad_scale(df, target="ExpA",
     print("             positive rank-biserial ⇒ target holds better grades   (Holm-adjusted)")
 
     dat_r = dat.with_columns(
-        pl.col(post_col).replace_strict(GRADE_RANK, default=None).alias("_gr")
+        pl.col(post_col).replace_strict(GRADE_RANK, default=None,
+                                        return_dtype=pl.Int64).alias("_gr")
     ).drop_nulls("_gr")
 
     tgt = dat_r.filter(pl.col(group_col) == target)["_gr"].to_numpy()
@@ -447,33 +486,50 @@ def test_expa_trad_scale(df, target="ExpA",
     for g in others:
         comp = dat_r.filter(pl.col(group_col) == g)["_gr"].to_numpy()
         if len(tgt) < 3 or len(comp) < 3:
-            rows.append((g, len(tgt), len(comp), np.nan, np.nan, np.nan, np.nan))
+            rows.append((g, len(tgt), len(comp),
+                         np.nan, np.nan, np.nan, np.nan, np.nan))
             raw_p.append(1.0); continue
         U, p = stats.mannwhitneyu(tgt, comp, alternative="two-sided")
         rb = 2 * U / (len(tgt) * len(comp)) - 1
-        rows.append((g, len(tgt), len(comp), rb, p, float(np.median(tgt)), float(np.median(comp))))
+        rows.append((g, len(tgt), len(comp), rb, p,
+                     float(np.median(tgt)), float(np.median(comp)), U))
         raw_p.append(p)
     padj = multipletests(raw_p, method="holm")[1]
 
     print(f"\n     {'contrast':<32} {'n₁':>4} {'n₂':>4}  {'med(rank)':>13}  "
-          f"{'r':>7}  {'p':>8}  {'p-Holm':>8}   effect")
+          f"{'U':>7}  {'r':>7}  {'p':>8}  {'p-Holm':>8}   effect")
     wins = 0
-    for (g, n1, n2, rb, p, m1, m2), pa in zip(rows, padj):
+    for (g, n1, n2, rb, p, m1, m2, U), pa in zip(rows, padj):
         med_str = f"{m1:.1f} vs {m2:.1f}" if not np.isnan(m1) else "n/a"
         rb_s = f"{rb:+.3f}" if not np.isnan(rb) else "   n/a"
         p_s = f"{p:.4f}" if not np.isnan(p) else "   n/a"
         pa_s = f"{pa:.4f}" if not np.isnan(pa) else "   n/a"
+        U_s = f"{U:.1f}" if not np.isnan(U) else "   n/a"
         mag = _mag(rb) if not np.isnan(rb) else "-"
         direction = ("better" if (not np.isnan(rb) and rb > 0)
                      else "worse" if (not np.isnan(rb) and rb < 0) else "-")
         marker = _sig(pa) if not np.isnan(pa) else " "
         print(f"     {target} vs {g:<20} {n1:>4} {n2:>4}  {med_str:>13}  "
-              f"{rb_s:>7}  {p_s:>8}  {pa_s:>8} {marker}  {mag} {direction}")
+              f"{U_s:>7}  {rb_s:>7}  {p_s:>8}  {pa_s:>8} {marker}  {mag} {direction}")
         if direction == "better" and not np.isnan(pa) and pa < ALPHA:
             wins += 1
 
     print(f"\n     → '{target}' significantly holds BETTER grades than "
           f"{wins}/{len(others)} of the other groups at post (Holm-adjusted).")
+
+    # register the biggest pairwise contrast among valid rows
+    valid_rows = [(i, r) for i, r in enumerate(rows) if not np.isnan(r[3])]
+    if valid_rows:
+        best_i, best_row = max(valid_rows, key=lambda t: abs(t[1][3]))
+        g_b, n1_b, n2_b, rb_b, p_b, _, _, U_b = best_row
+        _reg(figure=f"pre_post_trad_scale.pdf [{target} vs others, post]",
+             grouping=group_col, metric="grade rank (post)",
+             test="Mann-Whitney U", n=n1_b + n2_b,
+             statistic=U_b, statistic_name="U",
+             p=p_b, effect_name="rank-biserial r", effect_value=rb_b,
+             magnitude=_mag(rb_b), strength=abs(rb_b),
+             biggest_contrast=f"{target} vs {g_b}",
+             top_group=(target if rb_b > 0 else g_b))
 
     # overall verdict
     print("\n" + "-" * 78)
@@ -489,6 +545,7 @@ def test_expa_trad_scale(df, target="ExpA",
     else:
         print(f"'{target}' does not show a significant advantage at post.")
     print("-" * 78)
+
 
 def _target_vs_others(df, group_col, target, value_col=None, ordinal_map=None):
     if ordinal_map is not None:
@@ -515,41 +572,59 @@ def _target_vs_others(df, group_col, target, value_col=None, ordinal_map=None):
             rows.append(dict(comparator=g, n_t=len(tgt), n_c=len(comp),
                              med_t=(float(np.median(tgt)) if len(tgt) else np.nan),
                              med_c=(float(np.median(comp)) if len(comp) else np.nan),
-                             r=np.nan, p=np.nan, p_holm=np.nan))
+                             U=np.nan, r=np.nan, p=np.nan, p_holm=np.nan))
             raw_p.append(1.0); continue
         U, p = stats.mannwhitneyu(tgt, comp, alternative="two-sided")
         rb = 2 * U / (len(tgt) * len(comp)) - 1
         rows.append(dict(comparator=g, n_t=len(tgt), n_c=len(comp),
                          med_t=float(np.median(tgt)), med_c=float(np.median(comp)),
-                         r=rb, p=p, p_holm=np.nan))
+                         U=float(U), r=rb, p=p, p_holm=np.nan))
         raw_p.append(p)
     padj = multipletests(raw_p, method="holm")[1]
     for r, pa in zip(rows, padj):
         r["p_holm"] = pa
     return rows
 
+
 def _print_contrasts(target, rows, value_label):
     print(f"     {'contrast':<32} {'n_t':>4} {'n_c':>4}  {'med(t)':>7} {'med(c)':>7}"
-          f"  {'r':>7}  {'p':>8}  {'p-Holm':>8}   effect")
+          f"  {'U':>7}  {'r':>7}  {'p':>8}  {'p-Holm':>8}   effect")
     wins = 0
     for r in rows:
-        rb, p, pa = r["r"], r["p"], r["p_holm"]
+        rb, p, pa, U = r["r"], r["p"], r["p_holm"], r["U"]
         rb_s = f"{rb:+.3f}" if not np.isnan(rb) else "   n/a"
         p_s = f"{p:.4f}" if not np.isnan(p) else "   n/a"
         pa_s = f"{pa:.4f}" if not np.isnan(pa) else "   n/a"
+        U_s = f"{U:.1f}" if not np.isnan(U) else "   n/a"
         m1_s = f"{r['med_t']:.2f}" if not np.isnan(r["med_t"]) else "n/a"
         m2_s = f"{r['med_c']:.2f}" if not np.isnan(r["med_c"]) else "n/a"
         mag = _mag(rb) if not np.isnan(rb) else "-"
         direction = ("higher" if (not np.isnan(rb) and rb > 0)
                      else "lower" if (not np.isnan(rb) and rb < 0) else "-")
         print(f"     {target} vs {r['comparator']:<20} {r['n_t']:>4} {r['n_c']:>4}  "
-              f"{m1_s:>7} {m2_s:>7}  {rb_s:>7}  {p_s:>8}  {pa_s:>8} {_sig(pa)}  "
+              f"{m1_s:>7} {m2_s:>7}  {U_s:>7}  {rb_s:>7}  {p_s:>8}  {pa_s:>8} {_sig(pa)}  "
               f"{mag} {direction}")
         if direction == "higher" and not np.isnan(pa) and pa < ALPHA:
             wins += 1
     print(f"\n     -> '{target}' is significantly HIGHER on {value_label} than "
           f"{wins}/{len(rows)} of the other groups (Holm-adjusted).")
     return wins
+
+
+def _register_target_vs_others(figure, group_col, target, rows, metric_label):
+    """Register the biggest pairwise contrast among valid rows into RESULTS."""
+    valid = [r for r in rows if not np.isnan(r["r"])]
+    if not valid:
+        return
+    best = max(valid, key=lambda r: abs(r["r"]))
+    _reg(figure=figure, grouping=group_col, metric=metric_label,
+         test="Mann-Whitney U", n=best["n_t"] + best["n_c"],
+         statistic=best["U"], statistic_name="U",
+         p=best["p"], effect_name="rank-biserial r", effect_value=best["r"],
+         magnitude=_mag(best["r"]), strength=abs(best["r"]),
+         biggest_contrast=f"{target} vs {best['comparator']}",
+         top_group=(target if best["r"] > 0 else best["comparator"]))
+
 
 def test_expaa_pre_v3(
     df,
@@ -569,20 +644,16 @@ def test_expaa_pre_v3(
     print("            Positive rank-biserial correlation (r) indicates that")
     print("            the target group has a higher baseline.\n")
 
-    rows = _target_vs_others(
-        df,
-        group_col,
-        target,
-        value_col=v3_col,
-    )  # no ordinal_map
-
+    rows = _target_vs_others(df, group_col, target, value_col=v3_col)
     wins = _print_contrasts(target, rows, f"baseline ({v3_col})")
 
-    return {
-        "target": target,
-        "contrasts": rows,
-        "wins": wins,
-    }
+    _register_target_vs_others(
+        figure=f"{v3_col} [{target} baseline check]",
+        group_col=group_col, target=target, rows=rows,
+        metric_label=f"baseline ({v3_col})")
+
+    return {"target": target, "contrasts": rows, "wins": wins}
+
 
 def test_expa_ta_post(df, target="ExpA",
                      group_col="grupo_segmented_v4",
@@ -596,7 +667,14 @@ def test_expa_ta_post(df, target="ExpA",
     print("            Holm-adjusted    (positive r => target scores HIGHER)\n")
     rows = _target_vs_others(df, group_col, target, value_col=value_col)
     wins = _print_contrasts(target, rows, "self-efficacy (post)")
+
+    _register_target_vs_others(
+        figure=f"self_confidence_comparison.pdf [{target} vs others]",
+        group_col=group_col, target=target, rows=rows,
+        metric_label="self-efficacy (post)")
+
     return dict(target=target, contrasts=rows, wins=wins)
+
 
 def test_mejora_across_baseline_strata(
         df,
@@ -631,7 +709,7 @@ def test_mejora_across_baseline_strata(
     chi2, p, dof, exp = stats.chi2_contingency(table)
     v = _cramers_v(chi2, table)
     small = (exp < 5).mean()
-    print(f"\n     Chi2 = {chi2:.3f}, df = {dof}, n = {int(table.sum())}   "
+    print(f"\n     χ² = {chi2:.3f}, df = {dof}, n = {int(table.sum())}   "
           f"p = {p:.4f} {_sig(p)}   Cramer's V = {v:.3f} ({_mag(v)})")
     if small > 0:
         print(f"     note: {small*100:.0f}% of cells expected <5 (chi2 approximation)")
@@ -639,5 +717,13 @@ def test_mejora_across_baseline_strata(
                if p < ALPHA else
                "no significant difference in the mejora mix across strata (H0 not rejected)")
     print(f"     -> {verdict}")
+
+    _reg(figure="mejora_nota_pre.pdf [baseline strata]", grouping=stratum_col,
+         metric=f"{outcome_col} proportions", test="Chi-square",
+         n=int(table.sum()), statistic=chi2, statistic_name="chi2", dof=dof,
+         p=p, effect_name="Cramér's V", effect_value=v,
+         magnitude=_mag(v), strength=v,
+         biggest_contrast=f"{s_levels[0]} vs {s_levels[-1]}", top_group="-")
+
     return dict(chi2=chi2, dof=dof, p=p, cramers_v=v, table=table.tolist(),
                 strata=s_levels, outcomes=o_levels)
