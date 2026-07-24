@@ -90,10 +90,10 @@ def main():
     logging.info("STEP 5: Joining groups to crossed dataframe...\n")
 
     try:
-        df_grupos = hashes_groups_df.select(["id", "group"])
+        df_groups = hashes_groups_df.select(["id", "group"])
         
         df_cruzado = df_cruzado.join(
-            df_grupos,
+            df_groups,
             on="id",
             how="left"
         )

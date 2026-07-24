@@ -22,11 +22,11 @@ def process_forms_questions(
     questions: list[str]
 ) -> list[str]:
     
-    #Exclude 'Marca temporal', 'Puntuación', 'IDENTIFICADOR'
+    #Exclude 'timestamp', 'Puntuación', 'IDENTIFICADOR'
     questions = [
         q
         for q in questions
-        if q not in ['Marca temporal', 'Puntuación', 'IDENTIFICADOR']
+        if q not in ['timestamp', 'Puntuación', 'IDENTIFICADOR']
     ]
     
     #Remove [] elements

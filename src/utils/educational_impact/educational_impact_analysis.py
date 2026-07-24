@@ -100,75 +100,7 @@ def resolve_palette(keys, base_palette="Set2", override=None):
         if match:
             result[k] = match
 
-    return result
-
-#########################################################################################################################################################
-def rename_df(
-    df: pl.DataFrame
-) -> pl.DataFrame:
-    
-    #Replace traditional scale
-    mapping = {
-        "sobresaliente": "Excellent",
-        "notable": "Very Good",
-        "bien": "Good",
-        "suficiente": "Pass",
-        "suspenso": "Fail"
-    }
-    
-    df = df.with_columns(
-        pl.col("score_tc_cat_trad_scale_pre").replace(mapping),
-        pl.col("score_tc_cat_trad_scale_post").replace(mapping)
-    )
-    
-    #Replace improvement_hake_gain
-    mapping_mejora = {
-        "Mejora": "Improve",
-        "No Mejora": "Not Improve",
-        "Empeora": "Worsen"
-    }
-    
-    df = df.with_columns(
-        pl.col("improvement_hake_gain").replace(mapping_mejora)
-    )
-    
-    #Replace WSDI_cat
-    mapping_wdsi = {
-        "No Usado": "Not Used",
-        "Out_of_context": "Out of context",
-        "Profunda": "Deep"
-    }
-    
-    df = df.with_columns(
-        pl.col("WSDI_cat_v2").replace(mapping_wdsi)
-    )
-    
-    #Replace Alta/Media/Baja
-    mapping_levels = {
-        "No Usado": "Not Used",
-        "Baja": "Low",
-        "Media": "Medium",
-        "Alta": "High"
-    }
-    
-    df = df.with_columns(
-        pl.col("chat_freq_use").replace(mapping_levels),
-        pl.col("chat_freq_use_v2").replace(mapping_levels),
-        pl.col("score_tc_cat_pre").replace(mapping_levels),
-        pl.col("score_tc_retention_cat_pre").replace(mapping_levels),
-        pl.col("score_tc_transfer_cat_pre").replace(mapping_levels),
-        pl.col("score_tc_cat_post").replace(mapping_levels),
-        pl.col("score_tc_retention_cat_post").replace(mapping_levels),
-        pl.col("score_tc_transferencia_cat_post").replace(mapping_levels),
-        pl.col("score_tcc_rel_cat_post").replace(mapping_levels),
-        pl.col("score_tcc_ext_cat_post").replace(mapping_levels),
-        pl.col("score_tcc_int_cat_post").replace(mapping_levels),
-    )
-    
-    
-    return df
-    
-
+    return result   
 
 #########################################################################################################################################################
 
@@ -704,7 +636,7 @@ def plot_cat_comparison(
                     pdf[col].value_counts().sort_values(ascending=False).index.tolist()
                 )
 
-                # hue_order → orden de los grupos (valores de group_by)
+                # hue_order → orden de los groups (valores de group_by)
                 resolved_hue_order = hue_order if hue_order else group_vals
                 local_palette = {k: fixed_palette[k] for k in group_vals if k in fixed_palette}
 
@@ -935,7 +867,7 @@ def plot_quant_scatter(
                     x_line = np.linspace(sub[x_col].min(), sub[x_col].max(), 100)
                     ax.plot(x_line, m * x_line + b,
                             color=color, linewidth=1.6, zorder=4)
-            # r global (todos los grupos)
+            # r global (todos los groups)
             r_val, p_val = stats.pearsonr(pdf[x_col], pdf[y_col])
         else:
             color = pair_colors[i]

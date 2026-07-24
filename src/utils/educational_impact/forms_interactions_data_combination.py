@@ -29,11 +29,11 @@ def compute_time_interval_variables(
         
         #Variables Pre
         "timestamp_pre",
-        "puntuacion_tc_pre",
+        "score_tc_pre",
         
         #Variables Post
         "timestamp_post",
-        "puntuacion_tc_post",
+        "score_tc_post",
         
         #Evaluation Timestamp
         "tool_last_timestamp"
@@ -41,7 +41,7 @@ def compute_time_interval_variables(
 
     #Include Ganancia Unidades de Conocimiento
     filtered_df = filtered_df.with_columns(
-        ganancia_conocimiento = (pl.col("puntuacion_tc_post") - pl.col("puntuacion_tc_pre"))*10
+        ganancia_conocimiento = (pl.col("score_tc_post") - pl.col("score_tc_pre"))*10
     )
 
     #Transform final_timestamp_interaction time

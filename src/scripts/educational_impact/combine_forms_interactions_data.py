@@ -29,8 +29,8 @@ forms_data_path = os.path.join(project_path, 'data', 'forms', 'processed_data', 
 interactions_data_filename = 'interactions_processed_data.parquet'
 interactions_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', interactions_data_filename)
 
-centros_data_filename = 'centros_data.csv'
-centros_data_path = os.path.join(project_path, 'data', 'centros', centros_data_filename)
+schools_data_filename = 'schools_data.csv'
+schools_data_path = os.path.join(project_path, 'data', 'schools', schools_data_filename)
 
 # Output data directories
 output_filename = 'processed_forms_interactions_data.parquet'
@@ -79,8 +79,8 @@ def main():
         interactions_df = pl.read_parquet(interactions_data_path)
         logging.info(f" -> Loaded file: {interactions_data_filename}")
 
-        centros_df = pl.read_csv(centros_data_path)
-        logging.info(f" -> Loaded file: {centros_data_filename}\n")
+        schools_df = pl.read_csv(schools_data_path)
+        logging.info(f" -> Loaded file: {schools_data_filename}\n")
 
     except Exception as e:
         logging.error(f"Failed to load data: {e}")
@@ -100,9 +100,9 @@ def main():
         ]
 
         METRICS_POST = [
-            'puntuacion_tcc_rel_post',
-            'puntuacion_tcc_int_post',
-            'puntuacion_tcc_ext_post',
+            'score_tcc_rel_post',
+            'score_tcc_int_post',
+            'score_tcc_ext_post',
             'score_tcc_rel_cat_post',
             'score_tcc_int_cat_post',
             'score_tcc_ext_cat_post',
@@ -116,7 +116,7 @@ def main():
             'score_tc_retention_hake_gain_cat',
             'score_tc_transfer_hake_gain_cat',
             'score_tc_units_hake_gain',
-            'score_tc_retencion_units_hake_gain',
+            'score_tc_retention_units_hake_gain',
             'score_tc_transfer_units_hake_gain',
             'score_tc_units_hake_gain_cat',
             'score_tc_retention_units_hake_gain_cat',
@@ -201,11 +201,11 @@ def main():
     logging.info("STEP 6: Enriching with school socioeconomic data...\n")
 
     try:
-        centros_df = centros_df.with_columns(
+        schools_df = schools_df.with_columns(
             pl.col("nombre").replace(CENTROS_IDS_MAP).alias('school')
         )
         forms_interactions_df = forms_interactions_df.join(
-            centros_df,
+            schools_df,
             how='left',
             on='school'
         )

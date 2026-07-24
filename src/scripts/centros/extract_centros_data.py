@@ -1,9 +1,9 @@
 '''
-renta_centros.py
+renta_schools.py
 ================
-Genera renta_centros_educativos.csv con la renta media por hogar (Atlas de
+Genera renta_schools_educativos.csv con la renta media por hogar (Atlas de
 Distribución de Renta de los Hogares del INE, año 2023) de la sección censal
-en la que se ubica cada uno de estos centros:
+en la que se ubica cada uno de estos schools:
 
   - IES José García Nieto      (Las Rozas)
   - IES Ramiro de Maeztu       (Madrid)
@@ -15,7 +15,7 @@ Flujo:
   2. Descarga el shapefile de secciones censales del INE (≈63 MB).
   3. Spatial join punto-en-polígono → CUSEC (código de sección censal).
   4. Descarga el CSV del Atlas de Renta del INE (≈340 MB) y lo filtra.
-  5. Exporta renta_centros_educativos.csv y .xlsx.
+  5. Exporta renta_schools_educativos.csv y .xlsx.
 
 Requisitos:
   pip install pandas geopandas geopy requests openpyxl
@@ -32,7 +32,7 @@ from geopy.extra.rate_limiter import RateLimiter
 # ─── CONFIGURACIÓN ───────────────────────────────────────────────────────────
 script_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.join(script_path, '..', '..', '..')
-output_dir = os.path.join(project_path, 'data', 'centros')
+output_dir = os.path.join(project_path, 'data', 'schools')
 os.makedirs(output_dir, exist_ok=True)
 
 URL_SHP   = "https://www.ine.es/prodyser/cartografia/seccionado_2024.zip"
@@ -43,7 +43,7 @@ DIR_SHP   = os.path.join(output_dir, "seccionado")
 SHP_FILE  = os.path.join(DIR_SHP, "SECC_CE_20240101.shp")
 CSV_RENTA = os.path.join(output_dir, "atlas_renta_30824.csv")
 
-OUT_CSV   = os.path.join(output_dir, "centros_data.csv")
+OUT_CSV   = os.path.join(output_dir, "schools_data.csv")
 
 # Centros actualizados con el curso
 CENTROS = [
@@ -60,13 +60,13 @@ CENTROS = [
 AÑO = 2023
 
 # ─── 1. GEOCODIFICACIÓN ──────────────────────────────────────────────────────
-def geocodifica(centros):
+def geocodifica(schools):
     print("→ Geocodificando con Nominatim (≈1s por school)…")
-    geo = Nominatim(user_agent="renta_centros_educativos")
+    geo = Nominatim(user_agent="renta_schools_educativos")
     geocode = RateLimiter(geo.geocode, min_delay_seconds=1.2)
 
     filas = []
-    for nombre, direccion, curso in centros:
+    for nombre, direccion, curso in schools:
         loc = geocode(direccion, country_codes="es")
         if loc is None:
             print(f"  ✗ {nombre}: no localizado")
@@ -90,16 +90,16 @@ def descarga_shapefile():
         z.extractall(DIR_SHP)
 
 # ─── 3. ASIGNACIÓN DE SECCIÓN CENSAL ────────────────────────────────────────
-def asigna_seccion(df_centros):
+def asigna_seccion(df_schools):
     print("→ Cargando seccionado…")
     secc = gpd.read_file(SHP_FILE).to_crs("EPSG:4326")
     secc = secc[["CUSEC", "NMUN", "NPRO", "geometry"]]
-    centros_gdf = gpd.GeoDataFrame(
-        df_centros.dropna(subset=["lat", "lon"]),
-        geometry=gpd.points_from_xy(df_centros["lon"], df_centros["lat"]),
+    schools_gdf = gpd.GeoDataFrame(
+        df_schools.dropna(subset=["lat", "lon"]),
+        geometry=gpd.points_from_xy(df_schools["lon"], df_schools["lat"]),
         crs="EPSG:4326",
     )
-    out = gpd.sjoin(centros_gdf, secc, how="left", predicate="within")
+    out = gpd.sjoin(schools_gdf, secc, how="left", predicate="within")
     return out.drop(columns=["geometry", "index_right"])
 
 # ─── 4. DESCARGA ATLAS DE RENTA ──────────────────────────────────────────────
@@ -116,7 +116,7 @@ def renta_para_cusecs(cusecs_set, año=AÑO):
     indicadores_deseados = [
         "Renta neta media por hogar",
         "Renta neta media por persona",
-        "Mediana de la renta por unidad de consumo",
+        "Mediumna de la renta por unidad de consumo",
     ]
     trozos = []
     for chunk in pd.read_csv(CSV_RENTA, sep=";", encoding="utf-8",
@@ -166,7 +166,7 @@ def main():
         "NPRO":  "provincia",
         "Renta neta media por hogar":                   "renta_media_hogar_eur",
         "Renta neta media por persona":                 "renta_media_persona_eur",
-        "Mediana de la renta por unidad de consumo":    "mediana_renta_uc_eur",
+        "Mediumna de la renta por unidad de consumo":    "mediana_renta_uc_eur",
     })
 
     final = final.sort_values("renta_media_hogar_eur", ascending=False)

@@ -26,6 +26,7 @@ def get_forms_data(client, nombre_hoja, ruta_salida):
         
         data = sheet.get_all_records()
         df = pd.DataFrame(data)
+        df.rename(columns={"Marca temporal": "timestamp"}, inplace=True)
         
         df.to_csv(ruta_salida, index=False)
         print(f"✓ Hoja '{nombre_hoja}' descargada en: {ruta_salida}")

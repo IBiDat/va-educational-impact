@@ -204,19 +204,19 @@ def process_interactions_data(raw_data):
         evaluator_chat_used = pl.col('evaluation_answers_counts') > 0
     ).with_columns(
         pl.when(pl.col("chat_interactions_counts") == 0)
-        .then(pl.lit("No Usado"))
+        .then(pl.lit("Not Used"))
         .otherwise(
             pl.col("chat_interactions_counts")
-            .qcut(3, labels=["Baja", "Media", "Alta"], allow_duplicates=True) # q33 and q67 are used
+            .qcut(3, labels=["Low", "Medium", "High"], allow_duplicates=True) # q33 and q67 are used
             .cast(pl.Utf8)
         )
         .alias("chat_freq_use_v2")
     ).with_columns(
         pl.when(pl.col("chat_interactions_counts") == 0)
-        .then(pl.lit("No Usado"))
+        .then(pl.lit("Not Used"))
         .otherwise(
             pl.col("chat_interactions_counts")
-            .qcut(2, labels=["Baja", "Alta"], allow_duplicates=True) # q50 is used
+            .qcut(2, labels=["Low", "High"], allow_duplicates=True) # q50 is used
             .cast(pl.Utf8)
         )
         .alias("chat_freq_use")
@@ -341,17 +341,17 @@ def categorize_wsdi_v2(wsdi: float) -> str:
     elif wsdi <= 2.2:
         return "Superficial" # (1.4, 2.2]
     else:
-        return "Profunda" # > 2.2
+        return "Deep" # > 2.2
 
 def categorize_wsdi(wsdi: float) -> str:
     if wsdi <= 0.5:
-        return 'Out_of_context' # <= 0.5
+        return 'Out of context' # <= 0.5
     elif wsdi <= 1.4:
         return "Cheating" # (0.5, 1.4]
     elif wsdi <= 2.2:
         return "Superficial" # (1.4, 2.2]
     else:
-        return "Profunda" # > 2.2
+        return "Deep" # > 2.2
     
 #########################################################################################################################################################
 
@@ -471,19 +471,19 @@ def segment_experimental_type(interactions_df):
     """
     Segmenta el group experimental en base a Frecuencia y Calidad de uso.
     
-    - AA: Frecuencia Alta / Calidad Alta
-    - BA: Frecuencia no-Alta / Calidad Alta
-    - AB: Frecuencia Alta / Calidad Baja
-    - BB: Frecuencia no-Alta / Calidad Baja
+    - AA: Frecuencia High / Calidad High
+    - BA: Frecuencia no-High / Calidad High
+    - AB: Frecuencia High / Calidad Low
+    - BB: Frecuencia no-High / Calidad Low
     """
-    freq_alta = pl.col("chat_freq_use_v2") == "Alta"
-    freq_baja = pl.col("chat_freq_use_v2") == "Baja"
-    freq_media = pl.col("chat_freq_use_v2") == "Media"
+    freq_alta = pl.col("chat_freq_use_v2") == "High"
+    freq_baja = pl.col("chat_freq_use_v2") == "Low"
+    freq_media = pl.col("chat_freq_use_v2") == "Medium"
 
-    freq_alta_v2 = pl.col("chat_freq_use") == "Alta"
-    freq_baja_v2 = pl.col("chat_freq_use") == "Baja"
+    freq_alta_v2 = pl.col("chat_freq_use") == "High"
+    freq_baja_v2 = pl.col("chat_freq_use") == "Low"
 
-    freq_not_used = pl.col("chat_freq_use_v2") == "No Usado"
+    freq_not_used = pl.col("chat_freq_use_v2") == "Not Used"
 
     calidad_alta = pl.col("high_quality_use") == True
     calidad_baja = pl.col("high_quality_use") == False
@@ -565,8 +565,8 @@ def analizar_rendimiento_por_interaccion(df_parquet, df_interacciones):
         "score_tc_hake_gain",
         "score_tc_retention_hake_gain",
         "score_tc_transfer_hake_gain",
-        "puntuacion_tc_post",
-        "puntuacion_tcc_rel_post" # Carga cognitiva relevante (si quieres verla)
+        "score_tc_post",
+        "score_tcc_rel_post" # Carga cognitiva relevante (si quieres verla)
     ]
 
     # 3. Realizamos la agregación por categoría de WSDI

@@ -11,7 +11,7 @@ between-group comparison of one metric:
   * self_confidence -> self-eff gain (ta_post - ta_pre)
   * trad_scale      -> grade-level change (ordinal)
   * tcc_*           -> post load     (no pre exists for cognitive load)
-  * mejora_*        -> improvement CATEGORY  (Improve / Not / Worsen)
+  * improvement_*        -> improvement CATEGORY  (Improve / Not / Worsen)
 
 Tests:
   * 2 groups      -> Mann-Whitney U            + rank-biserial r
@@ -676,7 +676,7 @@ def test_expa_ta_post(df, target="ExpA",
     return dict(target=target, contrasts=rows, wins=wins)
 
 
-def test_mejora_across_baseline_strata(
+def test_improvement_across_baseline_strata(
         df,
         stratum_col="score_tc_cat_pre",
         outcome_col="improvement_hake_gain",
@@ -685,7 +685,7 @@ def test_mejora_across_baseline_strata(
     print("=" * 82)
     print("TEST 3  -  is the improvement mix (Improve / Not Improve / Worsen) the SAME")
     print(f"           across the three baseline panels ({stratum_col} = Low / Medium / High)")
-    print("           of mejora_nota_pre.pdf, collapsing groups within each panel?")
+    print("           of improvement_nota_pre.pdf, collapsing groups within each panel?")
     print("=" * 82)
     print("   metric : proportion in each mejora category")
     print("   test   : Chi-square of independence on the 3 (baseline) x 3 (mejora) table")
@@ -718,7 +718,7 @@ def test_mejora_across_baseline_strata(
                "no significant difference in the mejora mix across strata (H0 not rejected)")
     print(f"     -> {verdict}")
 
-    _reg(figure="mejora_nota_pre.pdf [baseline strata]", grouping=stratum_col,
+    _reg(figure="improvement_nota_pre.pdf [baseline strata]", grouping=stratum_col,
          metric=f"{outcome_col} proportions", test="Chi-square",
          n=int(table.sum()), statistic=chi2, statistic_name="chi2", dof=dof,
          p=p, effect_name="Cramér's V", effect_value=v,

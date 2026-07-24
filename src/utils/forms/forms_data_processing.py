@@ -122,8 +122,8 @@ def add_categorization(df):
     ]
     
     # Añadimos las de carga cognitiva (estas existen en el pre-test como Null, y en el post-test con datos)
-    if 'puntuacion_tcc_rel' in df.columns:
-        cols_to_categorize.extend(['puntuacion_tcc_rel', 'puntuacion_tcc_int', 'puntuacion_tcc_ext'])
+    if 'score_tcc_rel' in df.columns:
+        cols_to_categorize.extend(['score_tcc_rel', 'score_tcc_int', 'score_tcc_ext'])
 
     for col in cols_to_categorize:
         # 1. VERIFICACIÓN: Si la columna no existe, es de tipo Null o está completamente vacía, la saltamos.
@@ -143,39 +143,39 @@ def add_categorization(df):
 
         # 4. Aplicamos la categorización
         df = df.with_columns(
-            pl.when(pl.col(col) <= q33).then(pl.lit("Baja"))
-            .when(pl.col(col) <= q67).then(pl.lit("Media"))
-            .otherwise(pl.lit("Alta"))
+            pl.when(pl.col(col) <= q33).then(pl.lit("Low"))
+            .when(pl.col(col) <= q67).then(pl.lit("Medium"))
+            .otherwise(pl.lit("High"))
             .alias(f"{col}_cat")
         )
 
     df = df.with_columns(
-        pl.when(pl.col('score_tc') < 0.5).then(pl.lit('suspenso'))
-        .when((pl.col('score_tc') >= 0.5) & (pl.col('score_tc') < 0.6)).then(pl.lit('suficiente'))
-        .when((pl.col('score_tc') >= 0.6) & (pl.col('score_tc') < 0.7)).then(pl.lit('bien'))
-        .when((pl.col('score_tc') >= 0.7) & (pl.col('score_tc') < 0.9)).then(pl.lit('notable'))
-        .otherwise(pl.lit('sobresaliente'))
-        .alias('puntuacion_tc_cat_trad_scale')
+        pl.when(pl.col('score_tc') < 0.5).then(pl.lit('Fail'))
+        .when((pl.col('score_tc') >= 0.5) & (pl.col('score_tc') < 0.6)).then(pl.lit('Pass'))
+        .when((pl.col('score_tc') >= 0.6) & (pl.col('score_tc') < 0.7)).then(pl.lit('Good'))
+        .when((pl.col('score_tc') >= 0.7) & (pl.col('score_tc') < 0.9)).then(pl.lit('Very Good'))
+        .otherwise(pl.lit('Excellent'))
+        .alias('score_tc_cat_trad_scale')
     ).with_columns(
-        pl.when(pl.col('score_tc') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
-        .otherwise(pl.lit('notable-sobresaliente'))
-        .alias('puntuacion_tc_cat_trad_scale_v2')
+        pl.when(pl.col('score_tc') <= 0.7).then(pl.lit('Fail-Pass-Good'))
+        .otherwise(pl.lit('Very Good-Excellent'))
+        .alias('score_tc_cat_trad_scale_v2')
     ).with_columns(
-        pl.when(pl.col('score_tc_retention') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
-        .otherwise(pl.lit('notable-sobresaliente'))
-        .alias('puntuacion_tc_retencion_cat_trad_scale_v2')
+        pl.when(pl.col('score_tc_retention') <= 0.7).then(pl.lit('Fail-Pass-Good'))
+        .otherwise(pl.lit('Very Good-Excellent'))
+        .alias('score_tc_retention_cat_trad_scale_v2')
     ).with_columns(
-        pl.when(pl.col('score_tc_transfer') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
-        .otherwise(pl.lit('notable-sobresaliente'))
-        .alias('puntuacion_tc_transferencia_cat_trad_scale_v2')
+        pl.when(pl.col('score_tc_transfer') <= 0.7).then(pl.lit('Fail-Pass-Good'))
+        .otherwise(pl.lit('Very Good-Excellent'))
+        .alias('score_tc_transfer_cat_trad_scale_v2')
     )
 
     # Generación de la Puntuación Final Sintética
-    cat_mapping = {"Baja": 1, "Media": 2, "Alta": 3}
+    cat_mapping = {"Low": 1, "Medium": 2, "High": 3}
     
     df = df.with_columns(
-        ((pl.col("puntuacion_tc_cat").replace(cat_mapping).cast(pl.Float32) + 
-          pl.col("puntuacion_ta_cat").replace(cat_mapping).cast(pl.Float32)) / 2
+        ((pl.col("score_tc_cat").replace(cat_mapping).cast(pl.Float32) + 
+          pl.col("score_ta_cat").replace(cat_mapping).cast(pl.Float32)) / 2
         ).round(1).alias("indice_desempeño_global")
     )
 
@@ -198,7 +198,7 @@ def process_forms_data(raw_data_dir):
         df = df_raw.clone()
         
         df = df.rename(
-            {c: c.lower().replace('retención', 'retencion').replace('extrínseca', 'extrinseca').replace('intrínseca', 'intrinseca') for c in df.columns}
+            {c: c.lower().replace('retención', 'retention').replace('extrínseca', 'extrinseca').replace('intrínseca', 'intrinseca') for c in df.columns}
         ).rename({'identificador': 'id'})
 
         cols_tc = get_cols_tc(df)
@@ -225,14 +225,14 @@ def process_forms_data(raw_data_dir):
 
                     (pl.sum_horizontal(exprs_ta) / len(cols_ta)).round(2).alias('score_ta'),
 
-                    (pl.sum_horizontal(exprs_tcc_rel) / len(cols_tcc_rel)).round(2).alias('puntuacion_tcc_rel') if 'post' in raw_filename else pl.lit(None).alias('puntuacion_tcc_rel'),
+                    (pl.sum_horizontal(exprs_tcc_rel) / len(cols_tcc_rel)).round(2).alias('score_tcc_rel') if 'post' in raw_filename else pl.lit(None).alias('score_tcc_rel'),
 
-                    (pl.sum_horizontal(exprs_tcc_int) / len(cols_tcc_int)).round(2).alias('puntuacion_tcc_int') if 'post' in raw_filename else pl.lit(None).alias('puntuacion_tcc_int'),
+                    (pl.sum_horizontal(exprs_tcc_int) / len(cols_tcc_int)).round(2).alias('score_tcc_int') if 'post' in raw_filename else pl.lit(None).alias('score_tcc_int'),
 
-                    (pl.sum_horizontal(exprs_tcc_ext) / len(cols_tcc_ext)).round(2).alias('puntuacion_tcc_ext') if 'post' in raw_filename else pl.lit(None).alias('puntuacion_tcc_ext')
+                    (pl.sum_horizontal(exprs_tcc_ext) / len(cols_tcc_ext)).round(2).alias('score_tcc_ext') if 'post' in raw_filename else pl.lit(None).alias('score_tcc_ext')
                 ] + 
                 [
-                    (pl.sum_horizontal(exprs_tc_tipos[tc_tipo]) / MAX_PUNTUACION_TC_TIPO).alias(f'puntuacion_tc_{tc_tipo}') for tc_tipo in TC_TIPOS
+                    (pl.sum_horizontal(exprs_tc_tipos[tc_tipo]) / MAX_PUNTUACION_TC_TIPO).alias(f'score_tc_{tc_tipo}') for tc_tipo in TC_TIPOS
                 ]
             )
                 )
@@ -284,7 +284,7 @@ def add_hake_gains(df, metrics, max_score=1.0):
 
 def add_hake_gain_categorization(df):
     """
-    Categoriza las columnas de Ganancia de Hake en 'Baja', 'Media' y 'Alta'
+    Categoriza las columnas de Ganancia de Hake en 'Low', 'Medium' y 'High'
     usando los percentiles 33 y 67, siguiendo el mismo criterio que add_categorization.
     """
     # Detectamos automáticamente las columnas de Hake presentes en el DataFrame
@@ -307,9 +307,9 @@ def add_hake_gain_categorization(df):
 
         # 4. Aplicamos la categorización
         df = df.with_columns(
-            pl.when(pl.col(col) <= q33).then(pl.lit("Baja"))
-            .when(pl.col(col) <= q67).then(pl.lit("Media"))
-            .otherwise(pl.lit("Alta"))
+            pl.when(pl.col(col) <= q33).then(pl.lit("Low"))
+            .when(pl.col(col) <= q67).then(pl.lit("Medium"))
+            .otherwise(pl.lit("High"))
             .alias(f"{col}_cat")
         )
 
@@ -322,32 +322,32 @@ def add_hake_gain_categorization(df):
         pl.when(pl.col('score_tc_units_hake_gain') > 0)
         .then(True)
         .otherwise(False)
-        .alias('mejora_units_hake_gain_v2')
+        .alias('improvement_units_hake_gain')
     ).with_columns(
-            pl.when(pl.col('score_tc_hake_gain') > 0).then(pl.lit("Mejora"))
-            .when(pl.col('score_tc_hake_gain') == 0).then(pl.lit("No Mejora"))
-            .otherwise(pl.lit("Empeora"))
+            pl.when(pl.col('score_tc_hake_gain') > 0).then(pl.lit("Improve"))
+            .when(pl.col('score_tc_hake_gain') == 0).then(pl.lit("Not Improve"))
+            .otherwise(pl.lit("Worsen"))
             .alias('improvement_hake_gain')
     )
     
-    #Mejoras en retencion y transferencia
+    #Improves en retention y transfer
     df = df.with_columns(
-            pl.when(pl.col('score_tc_retention_hake_gain') > 0).then(pl.lit("Mejora"))
-            .when(pl.col('score_tc_retention_hake_gain') == 0).then(pl.lit("No Mejora"))
-            .otherwise(pl.lit("Empeora"))
+            pl.when(pl.col('score_tc_retention_hake_gain') > 0).then(pl.lit("Improve"))
+            .when(pl.col('score_tc_retention_hake_gain') == 0).then(pl.lit("Not Improve"))
+            .otherwise(pl.lit("Worsen"))
             .alias('improvement_retention_hake_gain')
     ).with_columns(
-            pl.when(pl.col('score_tc_transfer_hake_gain') > 0).then(pl.lit("Mejora"))
-            .when(pl.col('score_tc_transfer_hake_gain') == 0).then(pl.lit("No Mejora"))
-            .otherwise(pl.lit("Empeora"))
+            pl.when(pl.col('score_tc_transfer_hake_gain') > 0).then(pl.lit("Improve"))
+            .when(pl.col('score_tc_transfer_hake_gain') == 0).then(pl.lit("Not Improve"))
+            .otherwise(pl.lit("Worsen"))
             .alias('improvement_transfer_hake_gain')
     )
     
-    #Mejoras en autoconfianza
+    #Improves en autoconfianza
     df = df.with_columns(
-            pl.when(pl.col('score_ta_hake_gain') > 0).then(pl.lit("Mejora"))
-            .when(pl.col('score_ta_hake_gain') == 0).then(pl.lit("No Mejora"))
-            .otherwise(pl.lit("Empeora"))
+            pl.when(pl.col('score_ta_hake_gain') > 0).then(pl.lit("Improve"))
+            .when(pl.col('score_ta_hake_gain') == 0).then(pl.lit("Not Improve"))
+            .otherwise(pl.lit("Worsen"))
             .alias('improvement_ta_hake_gain')
     )
 
@@ -361,40 +361,40 @@ def add_hake_gain_categorization(df):
     q66_empeoramiento = empeoramientos.quantile(0.66)
 
     df = df.with_columns(
-        pl.when(pl.col('improvement_hake_gain') == 'Mejora')
+        pl.when(pl.col('improvement_hake_gain') == 'Improve')
         .then(
             pl.when(pl.col('score_tc_hake_gain') <= q33_mejora)
-            .then(pl.lit('Mejora-Baja'))
+            .then(pl.lit('Improve-Low'))
             .when(pl.col('score_tc_hake_gain') <= q66_mejora)
-            .then(pl.lit('Mejora-Media'))
-            .otherwise(pl.lit('Mejora-Alta'))
+            .then(pl.lit('Improve-Medium'))
+            .otherwise(pl.lit('Improve-High'))
         )
-        .when(pl.col('improvement_hake_gain') == 'Empeora')
+        .when(pl.col('improvement_hake_gain') == 'Worsen')
         .then(
             pl.when(pl.col('score_tc_hake_gain') >= q66_empeoramiento)
-            .then(pl.lit('Empeoramiento-Bajo'))
+            .then(pl.lit('Worsenmiento-Bajo'))
             .when(pl.col('score_tc_hake_gain') >= q33_empeoramiento)
-            .then(pl.lit('Empeoramiento-Medio'))
-            .otherwise(pl.lit('Empeoramiento-Alto'))
+            .then(pl.lit('Worsenmiento-Medio'))
+            .otherwise(pl.lit('Worsenmiento-Alto'))
         )
-        .otherwise(pl.lit('No Mejora'))
+        .otherwise(pl.lit('Not Improve'))
         .alias('improvement_levels_hake_gain')
     )
 
     df = df.with_columns(
-        pl.when(pl.col('improvement_hake_gain') == 'Mejora')
+        pl.when(pl.col('improvement_hake_gain') == 'Improve')
         .then(
             pl.when(pl.col('score_tc_hake_gain') <= q50_mejora)
-            .then(pl.lit('Mejora-Baja'))
-            .otherwise(pl.lit('Mejora-Alta'))
+            .then(pl.lit('Improve-Low'))
+            .otherwise(pl.lit('Improve-High'))
         )
-        .when(pl.col('improvement_hake_gain') == 'Empeora')
+        .when(pl.col('improvement_hake_gain') == 'Worsen')
         .then(
             pl.when(pl.col('score_tc_hake_gain') >= q50_empeoramiento)
-            .then(pl.lit('Empeoramiento-Bajo'))
-            .otherwise(pl.lit('Empeoramiento-Alto'))
+            .then(pl.lit('Worsenmiento-Bajo'))
+            .otherwise(pl.lit('Worsenmiento-Alto'))
         )
-        .otherwise(pl.lit('No Mejora'))
+        .otherwise(pl.lit('Not Improve'))
         .alias('improvement_levels_hake_gain_v2')
     )
 
