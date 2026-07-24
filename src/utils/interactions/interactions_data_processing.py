@@ -562,7 +562,7 @@ def analizar_rendimiento_por_interaccion(df_parquet, df_interacciones):
     # 2. Definimos las métricas que queremos resumir
     # Usamos las ganancias de Hake que ya tienes en tu Parquet
     metricas = [
-        "puntuacion_tc_hake_gain",
+        "score_tc_hake_gain",
         "puntuacion_tc_retencion_hake_gain",
         "puntuacion_tc_transferencia_hake_gain",
         "puntuacion_tc_post",
@@ -579,7 +579,7 @@ def analizar_rendimiento_por_interaccion(df_parquet, df_interacciones):
             *[pl.col(m).mean().round(3).alias(f"mean_{m}") for m in metricas],
             *[pl.col(m).std().round(3).alias(f"std_{m}") for m in metricas]
         ])
-        .sort("mean_puntuacion_tc_hake_gain", descending=True)
+        .sort("mean_score_tc_hake_gain", descending=True)
     )
 
     return resumen, df_merged

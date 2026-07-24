@@ -263,7 +263,7 @@ def add_hake_gains(df, metrics, max_score=1.0):
             .otherwise(
                 ((pl.col(col_post) - pl.col(col_pre)) / (max_score - pl.col(col_pre))).round(3)
             )
-            .alias(f"{metric}_hake_gain") # ej: puntuacion_tc_hake_gain
+            .alias(f"{metric}_hake_gain") # ej: score_tc_hake_gain
         )
 
         expr_2 = (
@@ -272,7 +272,7 @@ def add_hake_gains(df, metrics, max_score=1.0):
             .otherwise(
                 (pl.col(col_post) - pl.col(col_pre)).round(3)
             )
-            .alias(f"{metric}_units_hake_gain") # ej: puntuacion_tc_hake_gain
+            .alias(f"{metric}_units_hake_gain") # ej: score_tc_hake_gain
         )
 
         hake_exprs.append(expr_1)
@@ -314,7 +314,7 @@ def add_hake_gain_categorization(df):
         )
 
     df = df.with_columns(
-        pl.when(pl.col('puntuacion_tc_hake_gain') > 0)
+        pl.when(pl.col('score_tc_hake_gain') > 0)
         .then(True)
         .otherwise(False)
         .alias('improvement_hake_gain_v2')
@@ -324,8 +324,8 @@ def add_hake_gain_categorization(df):
         .otherwise(False)
         .alias('mejora_units_hake_gain_v2')
     ).with_columns(
-            pl.when(pl.col('puntuacion_tc_hake_gain') > 0).then(pl.lit("Mejora"))
-            .when(pl.col('puntuacion_tc_hake_gain') == 0).then(pl.lit("No Mejora"))
+            pl.when(pl.col('score_tc_hake_gain') > 0).then(pl.lit("Mejora"))
+            .when(pl.col('score_tc_hake_gain') == 0).then(pl.lit("No Mejora"))
             .otherwise(pl.lit("Empeora"))
             .alias('improvement_hake_gain')
     )
@@ -351,8 +351,8 @@ def add_hake_gain_categorization(df):
             .alias('mejora_autoconfianza_hake_gain')
     )
 
-    mejoras = df.filter(pl.col('puntuacion_tc_hake_gain') > 0)['puntuacion_tc_hake_gain']
-    empeoramientos = df.filter(pl.col('puntuacion_tc_hake_gain') < 0)['puntuacion_tc_hake_gain']
+    mejoras = df.filter(pl.col('score_tc_hake_gain') > 0)['score_tc_hake_gain']
+    empeoramientos = df.filter(pl.col('score_tc_hake_gain') < 0)['score_tc_hake_gain']
     q33_mejora = mejoras.quantile(0.33)
     q50_mejora = mejoras.quantile(0.50)
     q66_mejora = mejoras.quantile(0.66)
@@ -363,17 +363,17 @@ def add_hake_gain_categorization(df):
     df = df.with_columns(
         pl.when(pl.col('improvement_hake_gain') == 'Mejora')
         .then(
-            pl.when(pl.col('puntuacion_tc_hake_gain') <= q33_mejora)
+            pl.when(pl.col('score_tc_hake_gain') <= q33_mejora)
             .then(pl.lit('Mejora-Baja'))
-            .when(pl.col('puntuacion_tc_hake_gain') <= q66_mejora)
+            .when(pl.col('score_tc_hake_gain') <= q66_mejora)
             .then(pl.lit('Mejora-Media'))
             .otherwise(pl.lit('Mejora-Alta'))
         )
         .when(pl.col('improvement_hake_gain') == 'Empeora')
         .then(
-            pl.when(pl.col('puntuacion_tc_hake_gain') >= q66_empeoramiento)
+            pl.when(pl.col('score_tc_hake_gain') >= q66_empeoramiento)
             .then(pl.lit('Empeoramiento-Bajo'))
-            .when(pl.col('puntuacion_tc_hake_gain') >= q33_empeoramiento)
+            .when(pl.col('score_tc_hake_gain') >= q33_empeoramiento)
             .then(pl.lit('Empeoramiento-Medio'))
             .otherwise(pl.lit('Empeoramiento-Alto'))
         )
@@ -384,13 +384,13 @@ def add_hake_gain_categorization(df):
     df = df.with_columns(
         pl.when(pl.col('improvement_hake_gain') == 'Mejora')
         .then(
-            pl.when(pl.col('puntuacion_tc_hake_gain') <= q50_mejora)
+            pl.when(pl.col('score_tc_hake_gain') <= q50_mejora)
             .then(pl.lit('Mejora-Baja'))
             .otherwise(pl.lit('Mejora-Alta'))
         )
         .when(pl.col('improvement_hake_gain') == 'Empeora')
         .then(
-            pl.when(pl.col('puntuacion_tc_hake_gain') >= q50_empeoramiento)
+            pl.when(pl.col('score_tc_hake_gain') >= q50_empeoramiento)
             .then(pl.lit('Empeoramiento-Bajo'))
             .otherwise(pl.lit('Empeoramiento-Alto'))
         )

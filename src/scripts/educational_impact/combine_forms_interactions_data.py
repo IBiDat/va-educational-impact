@@ -109,10 +109,10 @@ def main():
         ]
 
         EXTRA_METRICS = [
-            'puntuacion_tc_hake_gain',
+            'score_tc_hake_gain',
             'puntuacion_tc_retencion_hake_gain',
             'puntuacion_tc_transferencia_hake_gain',
-            'puntuacion_tc_hake_gain_cat',
+            'score_tc_hake_gain_cat',
             'puntuacion_tc_retencion_hake_gain_cat',
             'puntuacion_tc_transferencia_hake_gain_cat',
             'puntuacion_tc_units_hake_gain',

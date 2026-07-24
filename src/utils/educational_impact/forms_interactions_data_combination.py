@@ -26,7 +26,7 @@ def compute_time_interval_variables(
         #Identificadores Usuario
         "id",
         "grupo",
-        "puntuacion_tc_hake_gain",
+        "score_tc_hake_gain",
         
         #Variables Pre
         "marca temporal_pre",
