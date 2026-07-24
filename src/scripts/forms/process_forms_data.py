@@ -110,7 +110,7 @@ def main():
     try:
         metrics_to_hake = [
                     'puntuacion_tc', 
-                    'puntuacion_tc_retencion', 
+                    'score_tc_retention', 
                     'score_tc_transfer',
                     'puntuacion_ta'
                 ]

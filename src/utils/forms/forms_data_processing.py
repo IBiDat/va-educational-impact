@@ -117,7 +117,7 @@ def add_categorization(df):
     cols_to_categorize = [
         'puntuacion_tc', 
         'puntuacion_ta', 
-        'puntuacion_tc_retencion', 
+        'score_tc_retention', 
         'score_tc_transfer'
     ]
     
@@ -161,7 +161,7 @@ def add_categorization(df):
         .otherwise(pl.lit('notable-sobresaliente'))
         .alias('puntuacion_tc_cat_trad_scale_v2')
     ).with_columns(
-        pl.when(pl.col('puntuacion_tc_retencion') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
+        pl.when(pl.col('score_tc_retention') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
         .otherwise(pl.lit('notable-sobresaliente'))
         .alias('puntuacion_tc_retencion_cat_trad_scale_v2')
     ).with_columns(
