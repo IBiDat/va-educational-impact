@@ -118,7 +118,7 @@ def add_categorization(df):
         'puntuacion_tc', 
         'puntuacion_ta', 
         'puntuacion_tc_retencion', 
-        'puntuacion_tc_transferencia'
+        'score_tc_transfer'
     ]
     
     # Añadimos las de carga cognitiva (estas existen en el pre-test como Null, y en el post-test con datos)
@@ -165,7 +165,7 @@ def add_categorization(df):
         .otherwise(pl.lit('notable-sobresaliente'))
         .alias('puntuacion_tc_retencion_cat_trad_scale_v2')
     ).with_columns(
-        pl.when(pl.col('puntuacion_tc_transferencia') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
+        pl.when(pl.col('score_tc_transfer') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
         .otherwise(pl.lit('notable-sobresaliente'))
         .alias('puntuacion_tc_transferencia_cat_trad_scale_v2')
     )
@@ -332,13 +332,13 @@ def add_hake_gain_categorization(df):
     
     #Mejoras en retencion y transferencia
     df = df.with_columns(
-            pl.when(pl.col('puntuacion_tc_retencion_hake_gain') > 0).then(pl.lit("Mejora"))
-            .when(pl.col('puntuacion_tc_retencion_hake_gain') == 0).then(pl.lit("No Mejora"))
+            pl.when(pl.col('score_tc_retention_hake_gain') > 0).then(pl.lit("Mejora"))
+            .when(pl.col('score_tc_retention_hake_gain') == 0).then(pl.lit("No Mejora"))
             .otherwise(pl.lit("Empeora"))
             .alias('mejora_retencion_hake_gain')
     ).with_columns(
-            pl.when(pl.col('puntuacion_tc_transferencia_hake_gain') > 0).then(pl.lit("Mejora"))
-            .when(pl.col('puntuacion_tc_transferencia_hake_gain') == 0).then(pl.lit("No Mejora"))
+            pl.when(pl.col('score_tc_transfer_hake_gain') > 0).then(pl.lit("Mejora"))
+            .when(pl.col('score_tc_transfer_hake_gain') == 0).then(pl.lit("No Mejora"))
             .otherwise(pl.lit("Empeora"))
             .alias('mejora_transferencia_hake_gain')
     )

@@ -563,8 +563,8 @@ def analizar_rendimiento_por_interaccion(df_parquet, df_interacciones):
     # Usamos las ganancias de Hake que ya tienes en tu Parquet
     metricas = [
         "score_tc_hake_gain",
-        "puntuacion_tc_retencion_hake_gain",
-        "puntuacion_tc_transferencia_hake_gain",
+        "score_tc_retention_hake_gain",
+        "score_tc_transfer_hake_gain",
         "puntuacion_tc_post",
         "puntuacion_tcc_rel_post" # Carga cognitiva relevante (si quieres verla)
     ]

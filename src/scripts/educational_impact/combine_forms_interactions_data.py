@@ -96,7 +96,7 @@ def main():
             'puntuacion_tc',
             'puntuacion_ta',
             'puntuacion_tc_retencion',
-            'puntuacion_tc_transferencia'
+            'score_tc_transfer'
         ]
 
         METRICS_POST = [
@@ -110,11 +110,11 @@ def main():
 
         EXTRA_METRICS = [
             'score_tc_hake_gain',
-            'puntuacion_tc_retencion_hake_gain',
-            'puntuacion_tc_transferencia_hake_gain',
+            'score_tc_retention_hake_gain',
+            'score_tc_transfer_hake_gain',
             'score_tc_hake_gain_cat',
-            'puntuacion_tc_retencion_hake_gain_cat',
-            'puntuacion_tc_transferencia_hake_gain_cat',
+            'score_tc_retention_hake_gain_cat',
+            'score_tc_transfer_hake_gain_cat',
             'puntuacion_tc_units_hake_gain',
             'puntuacion_tc_retencion_units_hake_gain',
             'puntuacion_tc_transferencia_units_hake_gain',

@@ -138,7 +138,7 @@ def calcular_medias_puntuacion(df_resultados, df_grupos):
         .agg([
             pl.col("puntuacion_tc").mean().round(2).alias("media_tc_general"),
             pl.col("puntuacion_tc_retencion").mean().round(2).alias("media_tc_retencion"),
-            pl.col("puntuacion_tc_transferencia").mean().round(2).alias("media_tc_transferencia"),
+            pl.col("score_tc_transfer").mean().round(2).alias("media_tc_transferencia"),
             pl.col("puntuacion_ta").mean().round(2).alias("media_ta"),
             pl.col("indice_desempeño_global").mean().round(2).alias("media_indice_desempeño_global")
         ])
