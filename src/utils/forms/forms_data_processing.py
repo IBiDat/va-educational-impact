@@ -219,7 +219,7 @@ def process_forms_data(raw_data_dir):
                 [
                     pl.lit('pre').alias('periodo') if 'pre' in raw_filename else pl.lit('post').alias('periodo'),
 
-                    pl.col("id").str.split("-").list.get(0).alias("centro"),
+                    pl.col("id").str.split("-").list.get(0).alias("school"),
 
                     (pl.col('puntuación').str.splitn(" / ", 2).struct.field("field_0").cast(pl.Int64) / MAX_PUNTUACION_TC).alias('score_tc'),
 
@@ -335,20 +335,20 @@ def add_hake_gain_categorization(df):
             pl.when(pl.col('score_tc_retention_hake_gain') > 0).then(pl.lit("Mejora"))
             .when(pl.col('score_tc_retention_hake_gain') == 0).then(pl.lit("No Mejora"))
             .otherwise(pl.lit("Empeora"))
-            .alias('mejora_retencion_hake_gain')
+            .alias('improvement_retention_hake_gain')
     ).with_columns(
             pl.when(pl.col('score_tc_transfer_hake_gain') > 0).then(pl.lit("Mejora"))
             .when(pl.col('score_tc_transfer_hake_gain') == 0).then(pl.lit("No Mejora"))
             .otherwise(pl.lit("Empeora"))
-            .alias('mejora_transferencia_hake_gain')
+            .alias('improvement_transfer_hake_gain')
     )
     
     #Mejoras en autoconfianza
     df = df.with_columns(
-            pl.when(pl.col('puntuacion_ta_hake_gain') > 0).then(pl.lit("Mejora"))
-            .when(pl.col('puntuacion_ta_hake_gain') == 0).then(pl.lit("No Mejora"))
+            pl.when(pl.col('score_ta_hake_gain') > 0).then(pl.lit("Mejora"))
+            .when(pl.col('score_ta_hake_gain') == 0).then(pl.lit("No Mejora"))
             .otherwise(pl.lit("Empeora"))
-            .alias('mejora_autoconfianza_hake_gain')
+            .alias('improvement_ta_hake_gain')
     )
 
     mejoras = df.filter(pl.col('score_tc_hake_gain') > 0)['score_tc_hake_gain']
@@ -378,7 +378,7 @@ def add_hake_gain_categorization(df):
             .otherwise(pl.lit('Empeoramiento-Alto'))
         )
         .otherwise(pl.lit('No Mejora'))
-        .alias('niveles_improvement_hake_gain')
+        .alias('improvement_levels_hake_gain')
     )
 
     df = df.with_columns(
@@ -395,7 +395,7 @@ def add_hake_gain_categorization(df):
             .otherwise(pl.lit('Empeoramiento-Alto'))
         )
         .otherwise(pl.lit('No Mejora'))
-        .alias('niveles_improvement_hake_gain_v2')
+        .alias('improvement_levels_hake_gain_v2')
     )
 
     return df

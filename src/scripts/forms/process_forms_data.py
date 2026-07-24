@@ -75,7 +75,7 @@ def main():
     logging.info("STEP 4: Renaming and crossing pre/post dataframes...\n")
 
     try:
-        cols_protegidas = ['id', 'centro']
+        cols_protegidas = ['id', 'school']
         df_pre_suf = df_pre.rename({col: f"{col}_pre" for col in df_pre.columns if col not in cols_protegidas})
         df_post_suf = df_post.rename({col: f"{col}_post" for col in df_post.columns if col not in cols_protegidas})
 
@@ -90,7 +90,7 @@ def main():
     logging.info("STEP 5: Joining groups to crossed dataframe...\n")
 
     try:
-        df_grupos = hashes_groups_df.select(["id", "grupo"])
+        df_grupos = hashes_groups_df.select(["id", "group"])
         
         df_cruzado = df_cruzado.join(
             df_grupos,
@@ -136,8 +136,8 @@ def main():
             (
                 pl.when(pl.col("id") == "Laguna-i9p")
                 .then(pl.lit("control"))
-                .otherwise(pl.col("grupo"))
-                .alias("grupo")
+                .otherwise(pl.col("group"))
+                .alias("group")
             )  
         ] 
          

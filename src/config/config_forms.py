@@ -23,7 +23,7 @@ TC_RESPUESTAS_CORRECTAS = {
         ],
 
         'transferencia': [
-            'La mediana, porque es resistente a los valores extremos y representa mejor al grupo mayoritario.',
+            'La mediana, porque es resistente a los valores extremos y representa mejor al group mayoritario.',
             'Que el 50% de los alumnos sacó notas entre 50 y 80',
             'No, porque la estadística descriptiva sólo resume los datos recogidos (los 20 pacientes) sin sacar conclusiones de la población total.',
             'El Grupo B, porque sus valores están más dispersos y alejados de su media que los del Grupo A.',
@@ -44,7 +44,7 @@ TC_RESPUESTAS_CORRECTAS = {
         'transferencia': [
             'Porque la media será mucho más alta que el precio real de la mayoría de las casas debido al valor atípico.',
             'Que el 50% de los empleados tiene sueldos comprendidos entre 1500 € y 2500 €.',
-            'No, la estadística descriptiva sólo describe el grupo analizado (Clase A); extenderlo a la Clase B sería inferencia.',
+            'No, la estadística descriptiva sólo describe el group analizado (Clase A); extenderlo a la Clase B sería inferencia.',
             'Ruta 2 tiene mayor desviación; es menos predecible y los datos están más lejos de la media.',
             'Un gráfico / diagrama de barras'
         ]

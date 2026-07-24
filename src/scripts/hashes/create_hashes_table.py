@@ -87,7 +87,7 @@ def main():
         full_df.write_csv(output_csv_path, separator=";")
 
         logging.info(f" -> Total records processed: {full_df.height}")
-        logging.info(f" -> Breakdown by Group:\n{full_df['grupo'].value_counts()}")
+        logging.info(f" -> Breakdown by Group:\n{full_df['group'].value_counts()}")
         logging.info(f"✅ CSV saved successfully at: {output_csv_path}")
 
     except Exception as e:

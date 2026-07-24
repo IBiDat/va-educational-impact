@@ -21,10 +21,10 @@ def analyze_experiment_results(processed_data_dict, hashes_dir):
     # 2. Cargar la tabla relacional de grupos
     df_grupos = pl.read_csv(os.path.join(hashes_dir, "hashes_groups.csv"), separator=";")    
     
-    # 3. Unir (Join) los resultados con el grupo correspondiente de cada estudiante
+    # 3. Unir (Join) los resultados con el group correspondiente de cada estudiante
     df_completo = df_combined.join(df_grupos, on="id", how="inner")
     
-    # 4. Extraer métricas (Media y Desviación Estándar) agrupadas por periodo y grupo
+    # 4. Extraer métricas (Media y Desviación Estándar) agrupadas por periodo y group
     cols_to_analyze = [
         "score_tc", 
         "score_ta", 
@@ -40,9 +40,9 @@ def analyze_experiment_results(processed_data_dict, hashes_dir):
         
     metricas = (
         df_completo
-        .group_by(["periodo", "grupo"])
+        .group_by(["periodo", "group"])
         .agg(agregaciones)
-        .sort(["periodo", "grupo"]) 
+        .sort(["periodo", "group"]) 
     )
     
     # --- CÁLCULO DE LA VARIACIÓN PORCENTUAL ---
@@ -57,8 +57,8 @@ def analyze_experiment_results(processed_data_dict, hashes_dir):
     
     # Unimos pre y post para tener todo en la misma fila y poder operar
     df_variacion = df_post.join(
-        df_pre.select(["grupo"] + list(renames.values())), 
-        on="grupo", 
+        df_pre.select(["group"] + list(renames.values())), 
+        on="group", 
         how="inner"
     )
     
@@ -74,10 +74,10 @@ def analyze_experiment_results(processed_data_dict, hashes_dir):
             .alias(f"{col}_var_%")
         )
         
-    df_variacion = df_variacion.select(["grupo"] + exprs_var)
+    df_variacion = df_variacion.select(["group"] + exprs_var)
     
     # Añadimos estas nuevas columnas a nuestra tabla original
-    metricas = metricas.join(df_variacion, on="grupo", how="left")
+    metricas = metricas.join(df_variacion, on="group", how="left")
     
     # Limpiamos las filas con nulos (que corresponden al periodo 'pre' que no tiene variación porcentual)
     limpieza_exprs = [
@@ -104,8 +104,8 @@ def test_significacion_estadistica(df_completo, metrica="score_tc"):
     df_post = df_completo.filter(pl.col("periodo") == "post")
     
     # Extraemos las puntuaciones en formato lista/array ignorando valores nulos
-    grupo_control = df_post.filter(pl.col("grupo") == "control").select(pl.col(metrica).drop_nulls()).to_series().to_list()
-    grupo_experimental = df_post.filter(pl.col("grupo") == "experimental").select(pl.col(metrica).drop_nulls()).to_series().to_list()
+    grupo_control = df_post.filter(pl.col("group") == "control").select(pl.col(metrica).drop_nulls()).to_series().to_list()
+    grupo_experimental = df_post.filter(pl.col("group") == "experimental").select(pl.col(metrica).drop_nulls()).to_series().to_list()
     
     # Realizamos el T-test
     t_stat, p_value = stats.ttest_ind(grupo_experimental, grupo_control, equal_var=False)
@@ -130,11 +130,11 @@ def calcular_medias_puntuacion(df_resultados, df_grupos):
     # 1. Unimos los resultados con los grupos (usando inner join por el 'id')
     df_cruzado = df_resultados.join(df_grupos, on="id", how="inner")
     
-    # 2. Agrupamos por grupo y calculamos las medias
+    # 2. Agrupamos por group y calculamos las medias
     medias = (
         df_cruzado
         # Si también quieres separar por "pre" y "post", añade "periodo" a esta lista:
-        .group_by(["periodo", "grupo"]) 
+        .group_by(["periodo", "group"]) 
         .agg([
             pl.col("score_tc").mean().round(2).alias("media_tc_general"),
             pl.col("score_tc_retention").mean().round(2).alias("media_tc_retencion"),
@@ -142,7 +142,7 @@ def calcular_medias_puntuacion(df_resultados, df_grupos):
             pl.col("score_ta").mean().round(2).alias("media_ta"),
             pl.col("indice_desempeño_global").mean().round(2).alias("media_indice_desempeño_global")
         ])
-        .sort(["periodo", "grupo"])
+        .sort(["periodo", "group"])
     )
     
     return medias
@@ -152,7 +152,7 @@ def calcular_medias_puntuacion(df_resultados, df_grupos):
 def realizar_analisis_hake_normalizado(
     df: pl.DataFrame,
     constructo_base: str,
-    col_grupo: str = "grupo"
+    col_grupo: str = "group"
 ):
     """
     Realiza el análisis de Hake y ANCOVA para puntuaciones ya normalizadas (0,1).
@@ -292,7 +292,7 @@ def analyze_experiment_results_centros(processed_data_dict, hashes_dir):
     """
     Cruza los datos procesados con la tabla de grupos, extrae métricas
     y calcula la variación porcentual entre el pre-test y el post-test
-    por centro y grupo.
+    por school y group.
     """
 
     # 1. Unir todos los DataFrames
@@ -323,9 +323,9 @@ def analyze_experiment_results_centros(processed_data_dict, hashes_dir):
 
     metricas = (
         df_completo
-        .group_by(["centro", "periodo", "grupo"])
+        .group_by(["school", "periodo", "group"])
         .agg(agregaciones)
-        .sort(["centro", "periodo", "grupo"])
+        .sort(["school", "periodo", "group"])
     )
 
     # --- VARIACIÓN PORCENTUAL ---
@@ -337,8 +337,8 @@ def analyze_experiment_results_centros(processed_data_dict, hashes_dir):
     df_pre = df_pre.rename(renames)
 
     df_variacion = df_post.join(
-        df_pre.select(["centro", "grupo"] + list(renames.values())),
-        on=["centro", "grupo"],
+        df_pre.select(["school", "group"] + list(renames.values())),
+        on=["school", "group"],
         how="inner"
     )
 
@@ -354,12 +354,12 @@ def analyze_experiment_results_centros(processed_data_dict, hashes_dir):
         )
 
     df_variacion = df_variacion.select(
-        ["centro", "grupo"] + exprs_var
+        ["school", "group"] + exprs_var
     )
 
     metricas = metricas.join(
         df_variacion,
-        on=["centro", "grupo"],
+        on=["school", "group"],
         how="left"
     )
 
@@ -381,20 +381,20 @@ def analyze_experiment_results_centros(processed_data_dict, hashes_dir):
 def test_significacion_estadistica_centros(df_completo, metrica="score_tc"):
     """
     Realiza un T-test independiente en el post-test
-    para cada centro y métrica elegida.
+    para cada school y métrica elegida.
     """
 
     df_post = df_completo.filter(pl.col("periodo") == "post")
 
-    centros = df_post.select("centro").unique().to_series().to_list()
+    centros = df_post.select("school").unique().to_series().to_list()
 
-    for centro in centros:
+    for school in centros:
 
-        df_centro = df_post.filter(pl.col("centro") == centro)
+        df_centro = df_post.filter(pl.col("school") == school)
 
         grupo_control = (
             df_centro
-            .filter(pl.col("grupo") == "control")
+            .filter(pl.col("group") == "control")
             .select(pl.col(metrica).drop_nulls())
             .to_series()
             .to_list()
@@ -402,14 +402,14 @@ def test_significacion_estadistica_centros(df_completo, metrica="score_tc"):
 
         grupo_experimental = (
             df_centro
-            .filter(pl.col("grupo") == "experimental")
+            .filter(pl.col("group") == "experimental")
             .select(pl.col(metrica).drop_nulls())
             .to_series()
             .to_list()
         )
 
         if len(grupo_control) < 2 or len(grupo_experimental) < 2:
-            print(f"\n⚠ Centro: {centro} → Muestras insuficientes.")
+            print(f"\n⚠ Centro: {school} → Muestras insuficientes.")
             continue
 
         t_stat, p_value = stats.ttest_ind(
@@ -418,7 +418,7 @@ def test_significacion_estadistica_centros(df_completo, metrica="score_tc"):
             equal_var=False
         )
 
-        print(f"\n--- Centro: {centro} | Métrica: {metrica} (Post-test) ---")
+        print(f"\n--- Centro: {school} | Métrica: {metrica} (Post-test) ---")
         print(f"Media Experimental: {sum(grupo_experimental)/len(grupo_experimental):.2f}")
         print(f"Media Control: {sum(grupo_control)/len(grupo_control):.2f}")
         print(f"P-valor: {p_value:.4f}")
@@ -433,19 +433,19 @@ def test_significacion_estadistica_centros(df_completo, metrica="score_tc"):
 def realizar_analisis_hake_por_centro(
     df: pl.DataFrame,
     constructo_base: str,
-    col_grupo: str = "grupo",
-    col_centro: str = "centro",
+    col_grupo: str = "group",
+    col_centro: str = "school",
     min_n: int = 5
 ):
     """
-    Análisis de ganancia de Hake estratificado por centro.
+    Análisis de ganancia de Hake estratificado por school.
 
     Args:
         df: DataFrame Polars con *_pre y *_post
         constructo_base: prefijo del constructo
         col_grupo: 'Control' / 'Experimental'
-        col_centro: columna identificadora del centro
-        min_n: tamaño mínimo por grupo para contrastar
+        col_centro: columna identificadora del school
+        min_n: tamaño mínimo por group para contrastar
     """
 
     col_pre = f"{constructo_base}_pre"
@@ -469,13 +469,13 @@ def realizar_analisis_hake_por_centro(
     )
 
     # --------------------------------------------------
-    # 2. Análisis por centro
+    # 2. Análisis por school
     # --------------------------------------------------
     resultados = []
 
-    for centro in df_valid[col_centro].unique().sort().to_list():
+    for school in df_valid[col_centro].unique().sort().to_list():
 
-        df_c = df_valid.filter(pl.col(col_centro) == centro)
+        df_c = df_valid.filter(pl.col(col_centro) == school)
 
         df_ctrl = df_c.filter(pl.col(col_grupo).str.to_lowercase() == "control")
         df_exp = df_c.filter(pl.col(col_grupo).str.to_lowercase() == "experimental")
@@ -486,7 +486,7 @@ def realizar_analisis_hake_por_centro(
         n_ctrl, n_exp = len(g_ctrl), len(g_exp)
 
         if n_ctrl < min_n or n_exp < min_n:
-            print(f"Centro {centro}: tamaño insuficiente (Control={n_ctrl}, Exp={n_exp})")
+            print(f"Centro {school}: tamaño insuficiente (Control={n_ctrl}, Exp={n_exp})")
             continue
 
         # Contraste principal
@@ -517,7 +517,7 @@ def realizar_analisis_hake_por_centro(
         d = (g_exp.mean() - g_ctrl.mean()) / s_pooled
 
         resultados.append({
-            "centro": centro,
+            "school": school,
             "n_control": n_ctrl,
             "n_experimental": n_exp,
             "media_g_control": g_ctrl.mean(),

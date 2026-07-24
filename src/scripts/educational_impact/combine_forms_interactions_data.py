@@ -64,7 +64,7 @@ def main():
     """
     Main execution flow for Combined Forms and Interactions Data.
     Filters form metrics, joins with interactions data, segments the experimental
-    groups, enriches with centro socioeconomic data, and saves the final processed
+    groups, enriches with school socioeconomic data, and saves the final processed
     dataset as Parquet.
     """
     logging.info("▶️ STARTING COMBINED DATA PROCESSING PIPELINE")
@@ -90,7 +90,7 @@ def main():
     logging.info("STEP 2: Selecting and filtering form columns...\n")
 
     try:
-        BASE_COLS = ['id', 'centro', 'grupo']
+        BASE_COLS = ['id', 'school', 'group']
 
         METRICS_PRE_POST = [
             'score_tc',
@@ -103,9 +103,9 @@ def main():
             'puntuacion_tcc_rel_post',
             'puntuacion_tcc_int_post',
             'puntuacion_tcc_ext_post',
-            'puntuacion_tcc_rel_cat_post',
-            'puntuacion_tcc_int_cat_post',
-            'puntuacion_tcc_ext_cat_post',
+            'score_tcc_rel_cat_post',
+            'score_tcc_int_cat_post',
+            'score_tcc_ext_cat_post',
         ]
 
         EXTRA_METRICS = [
@@ -117,31 +117,31 @@ def main():
             'score_tc_transfer_hake_gain_cat',
             'score_tc_units_hake_gain',
             'score_tc_retencion_units_hake_gain',
-            'puntuacion_tc_transferencia_units_hake_gain',
+            'score_tc_transfer_units_hake_gain',
             'score_tc_units_hake_gain_cat',
-            'puntuacion_tc_retencion_units_hake_gain_cat',
-            'puntuacion_tc_transferencia_units_hake_gain_cat',
-            'puntuacion_ta_hake_gain',
-            'puntuacion_ta_hake_gain_cat',
-            'puntuacion_ta_units_hake_gain',
+            'score_tc_retention_units_hake_gain_cat',
+            'score_tc_transfer_units_hake_gain_cat',
+            'score_ta_hake_gain',
+            'score_ta_hake_gain_cat',
+            'score_ta_units_hake_gain',
             'improvement_hake_gain',
             'improvement_hake_gain_v2',
-            'mejora_units_hake_gain',
-            "mejora_retencion_hake_gain",
-            "mejora_transferencia_hake_gain",
-            "mejora_autoconfianza_hake_gain",
-            'niveles_improvement_hake_gain',
-            'niveles_improvement_hake_gain_v2',
-            'puntuacion_tc_cat_trad_scale_pre',
-            'puntuacion_tc_cat_trad_scale_v2_pre',
-            'puntuacion_tc_retencion_cat_trad_scale_v2_pre',
-            'puntuacion_tc_transferencia_cat_trad_scale_v2_pre',
-            'puntuacion_tc_cat_trad_scale_post',
-            'puntuacion_tc_cat_trad_scale_v2_post',
-            'puntuacion_tc_retencion_cat_trad_scale_v2_post',
-            'puntuacion_tc_transferencia_cat_trad_scale_v2_post',
-            'marca temporal_pre',
-            'marca temporal_post'
+            'improvement_units_hake_gain',
+            "improvement_retention_hake_gain",
+            "improvement_transfer_hake_gain",
+            "improvement_ta_hake_gain",
+            'improvement_levels_hake_gain',
+            'improvement_levels_hake_gain_v2',
+            'score_tc_cat_trad_scale_pre',
+            'score_tc_cat_trad_scale_v2_pre',
+            'score_tc_retention_cat_trad_scale_v2_pre',
+            'score_tc_transfer_cat_trad_scale_v2_pre',
+            'score_tc_cat_trad_scale_post',
+            'score_tc_cat_trad_scale_v2_post',
+            'score_tc_retention_cat_trad_scale_v2_post',
+            'score_tc_transfer_cat_trad_scale_v2_post',
+            'timestamp_pre',
+            'timestamp_post'
         ]
 
         forms_cols_analysis = BASE_COLS + EXTRA_METRICS + [
@@ -198,21 +198,21 @@ def main():
         sys.exit(1)
 
     # 6. Enrich with Centro Socioeconomic Data
-    logging.info("STEP 6: Enriching with centro socioeconomic data...\n")
+    logging.info("STEP 6: Enriching with school socioeconomic data...\n")
 
     try:
         centros_df = centros_df.with_columns(
-            pl.col("nombre").replace(CENTROS_IDS_MAP).alias('centro')
+            pl.col("nombre").replace(CENTROS_IDS_MAP).alias('school')
         )
         forms_interactions_df = forms_interactions_df.join(
             centros_df,
             how='left',
-            on='centro'
+            on='school'
         )
         logging.info(" -> Centro data joined successfully\n")
 
     except Exception as e:
-        logging.error(f"Error during centro data enrichment: {e}")
+        logging.error(f"Error during school data enrichment: {e}")
         sys.exit(1)
 
     # 7. Save Outputs

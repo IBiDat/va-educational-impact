@@ -469,7 +469,7 @@ def add_wsdi_cheating_score(wsdi_df, cheating_df, interactions_df):
 
 def segment_experimental_type(interactions_df):
     """
-    Segmenta el grupo experimental en base a Frecuencia y Calidad de uso.
+    Segmenta el group experimental en base a Frecuencia y Calidad de uso.
     
     - AA: Frecuencia Alta / Calidad Alta
     - BA: Frecuencia no-Alta / Calidad Alta
@@ -515,7 +515,7 @@ def segment_experimental_type(interactions_df):
           .when( freq_baja_v2 &  calidad_baja).then(pl.lit("ExpBB"))
           .when(freq_not_used).then(pl.lit("ExpNotUsed"))
           .otherwise(pl.lit("ExpOther"))
-          .alias("experimental_type_v3")
+          .alias("experimental_type_freq_quality")
     )
 
     interactions_df =  interactions_df.with_columns(
@@ -523,7 +523,7 @@ def segment_experimental_type(interactions_df):
           .when(calidad_baja).then(pl.lit("ExpB"))
           .when(freq_not_used).then(pl.lit("ExpNotUsed"))
           .otherwise(pl.lit("ExpOther"))
-          .alias("experimental_type_v4")
+          .alias("experimental_type_quality")
     )
 
     interactions_df =  interactions_df.with_columns(

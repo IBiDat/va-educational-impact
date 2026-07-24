@@ -61,7 +61,7 @@ AÑO = 2023
 
 # ─── 1. GEOCODIFICACIÓN ──────────────────────────────────────────────────────
 def geocodifica(centros):
-    print("→ Geocodificando con Nominatim (≈1s por centro)…")
+    print("→ Geocodificando con Nominatim (≈1s por school)…")
     geo = Nominatim(user_agent="renta_centros_educativos")
     geocode = RateLimiter(geo.geocode, min_delay_seconds=1.2)
 

@@ -7,7 +7,7 @@ import polars as pl
 
 def process_school_hashes(json_path: str) -> pl.DataFrame:
     """
-    Lee un JSON de hashes, extrae el nombre del centro y asigna
+    Lee un JSON de hashes, extrae el nombre del school y asigna
     aleatoriamente 50% Control y 50% Experimental.
     """
     try:
@@ -24,10 +24,10 @@ def process_school_hashes(json_path: str) -> pl.DataFrame:
         # 2. Crear DataFrame con Polars
         df = pl.DataFrame({"id": id_list})
 
-        # 3. Extraer el nombre del centro desde el propio ID (ej: 'JoseGarciaNieto-9ba' -> 'JoseGarciaNieto')
+        # 3. Extraer el nombre del school desde el propio ID (ej: 'JoseGarciaNieto-9ba' -> 'JoseGarciaNieto')
         # Asumimos que el separador es siempre un guion '-'
         df = df.with_columns(
-            pl.col("id").str.split("-").list.get(0).alias("centro")
+            pl.col("id").str.split("-").list.get(0).alias("school")
         )
 
         # 4. Asignar Grupos (50/50)
@@ -43,11 +43,11 @@ def process_school_hashes(json_path: str) -> pl.DataFrame:
             pl.when(pl.col("row_idx") < cutoff)
             .then(pl.lit("control"))
             .otherwise(pl.lit("experimental"))
-            .alias("grupo")
+            .alias("group")
         )
 
         # 5. Seleccionar y ordenar columnas finales
-        df_final = df.select(["centro", "id", "grupo"])
+        df_final = df.select(["school", "id", "group"])
         
         return df_final
 

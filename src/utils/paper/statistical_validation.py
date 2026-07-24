@@ -416,7 +416,7 @@ def _print_pct(table, g_levels, b_levels, title):
 
 
 def test_expa_trad_scale(df, target="ExpA",
-                        group_col="grupo_segmented_v4",
+                        group_col="group_segmented_quality",
                         pre_col="score_tc_cat_trad_scale_pre",
                         post_col="score_tc_cat_trad_scale_post"):
     print("=" * 78)
@@ -629,7 +629,7 @@ def _register_target_vs_others(figure, group_col, target, rows, metric_label):
 def test_expaa_pre_v3(
     df,
     target="ExpAA",
-    group_col="grupo_segmented_v3",
+    group_col="group_segmented_freq_quality",
     v3_col="score_tc_pre",
 ):
     print("=" * 82)
@@ -656,7 +656,7 @@ def test_expaa_pre_v3(
 
 
 def test_expa_ta_post(df, target="ExpA",
-                     group_col="grupo_segmented_v4",
+                     group_col="group_segmented_quality",
                      value_col="score_ta_post"):
     print("=" * 82)
     print(f"TEST 2  -  does '{target}' hold HIGHER post self-efficacy ({value_col}) "

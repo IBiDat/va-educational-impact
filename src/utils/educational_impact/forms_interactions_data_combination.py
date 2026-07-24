@@ -6,14 +6,13 @@ import polars as pl
 
 def segment_groups(forms_interactions_df):
 
-    for version in ['v1', 'v2', 'v3', 'v4', 'v5', 'v6']:
+    for version in ['v1', 'v2', 'quality', 'freq_quality', 'v5', 'v6']:
         forms_interactions_df = forms_interactions_df.with_columns(
-            pl.when(pl.col('grupo') == 'experimental')
+            pl.when(pl.col('group') == 'experimental')
             .then(pl.col(f'experimental_type_{version}'))
-            .otherwise(pl.col('grupo'))
-            .alias(f'grupo_segmented_{version}')
+            .otherwise(pl.col('group'))
+            .alias(f'group_segmented_{version}')
         )
-
     return forms_interactions_df
 
 #########################################################################################################
@@ -25,15 +24,15 @@ def compute_time_interval_variables(
     filtered_df = combined_df.select(
         #Identificadores Usuario
         "id",
-        "grupo",
+        "group",
         "score_tc_hake_gain",
         
         #Variables Pre
-        "marca temporal_pre",
+        "timestamp_pre",
         "puntuacion_tc_pre",
         
         #Variables Post
-        "marca temporal_post",
+        "timestamp_post",
         "puntuacion_tc_post",
         
         #Evaluation Timestamp
@@ -56,16 +55,16 @@ def compute_time_interval_variables(
 
     #Create groups (Instituto-Grupo)
     filtered_df = filtered_df.with_columns(
-        class_group = (pl.col("id").str.split("-").list.get(0) + "_" + pl.col("grupo"))
+        class_group = (pl.col("id").str.split("-").list.get(0) + "_" + pl.col("group"))
     )
     
     #Transform temporal columns from str to datetime
     filtered_df = filtered_df.with_columns([
-        pl.col("marca temporal_pre").str.to_datetime("%d/%m/%Y %H:%M:%S"),
-        pl.col("marca temporal_post").str.to_datetime("%d/%m/%Y %H:%M:%S")
+        pl.col("timestamp_pre").str.to_datetime("%d/%m/%Y %H:%M:%S"),
+        pl.col("timestamp_post").str.to_datetime("%d/%m/%Y %H:%M:%S")
     ]).with_columns(
         pre_post_time_interval = (
-            (pl.col("marca temporal_post") - pl.col("marca temporal_pre"))
+            (pl.col("timestamp_post") - pl.col("timestamp_pre"))
             .dt.total_seconds()/60
         )
     )

@@ -117,8 +117,8 @@ def rename_df(
     }
     
     df = df.with_columns(
-        pl.col("puntuacion_tc_cat_trad_scale_pre").replace(mapping),
-        pl.col("puntuacion_tc_cat_trad_scale_post").replace(mapping)
+        pl.col("score_tc_cat_trad_scale_pre").replace(mapping),
+        pl.col("score_tc_cat_trad_scale_post").replace(mapping)
     )
     
     #Replace improvement_hake_gain
@@ -154,30 +154,17 @@ def rename_df(
     df = df.with_columns(
         pl.col("chat_freq_use").replace(mapping_levels),
         pl.col("chat_freq_use_v2").replace(mapping_levels),
-        pl.col("puntuacion_tc_cat_pre").replace(mapping_levels),
-        pl.col("puntuacion_tc_retencion_cat_pre").replace(mapping_levels),
-        pl.col("puntuacion_tc_transferencia_cat_pre").replace(mapping_levels),
-        pl.col("puntuacion_tc_cat_post").replace(mapping_levels),
-        pl.col("puntuacion_tc_retencion_cat_post").replace(mapping_levels),
-        pl.col("puntuacion_tc_transferencia_cat_post").replace(mapping_levels),
-        pl.col("puntuacion_tcc_rel_cat_post").replace(mapping_levels),
-        pl.col("puntuacion_tcc_ext_cat_post").replace(mapping_levels),
-        pl.col("puntuacion_tcc_int_cat_post").replace(mapping_levels),
+        pl.col("score_tc_cat_pre").replace(mapping_levels),
+        pl.col("score_tc_retention_cat_pre").replace(mapping_levels),
+        pl.col("score_tc_transfer_cat_pre").replace(mapping_levels),
+        pl.col("score_tc_cat_post").replace(mapping_levels),
+        pl.col("score_tc_retention_cat_post").replace(mapping_levels),
+        pl.col("score_tc_transferencia_cat_post").replace(mapping_levels),
+        pl.col("score_tcc_rel_cat_post").replace(mapping_levels),
+        pl.col("score_tcc_ext_cat_post").replace(mapping_levels),
+        pl.col("score_tcc_int_cat_post").replace(mapping_levels),
     )
     
-    
-    #Transform puntuation into score in every column
-    df = df.rename({
-        col: col.replace('puntuacion', 'score') for col in df.columns
-    })
-    
-    df = df.rename({
-        col: col.replace('retencion', 'retention') for col in df.columns
-    })
-    
-    df = df.rename({
-        col: col.replace('transferencia', 'transfer') for col in df.columns
-    })
     
     return df
     
@@ -304,7 +291,7 @@ def plot_cat_distribution(
                 if height > 0:
                     count = round(height * total)
                     ax.text(
-                        patch.get_x() + patch.get_width() / 2,  # centro horizontal
+                        patch.get_x() + patch.get_width() / 2,  # school horizontal
                         height,                          # justo encima de la barra
                         f"n={count}",
                         ha='center',
@@ -704,7 +691,7 @@ def plot_cat_comparison(
                 pdf = df.select([col, group_by]).to_pandas()
                 pdf[col] = pdf[col].fillna("Nulo").astype(str)
 
-                # Proporción condicional por grupo: n(cat, grupo) / n(grupo)
+                # Proporción condicional por group: n(cat, group) / n(group)
                 prop = (
                     pdf.groupby([group_by, col])
                     .size()
@@ -1785,7 +1772,7 @@ def plot_cat_comparison_faceted_heatmap(
         than left blank.
  
     Only the group_by branch is implemented in full generality (matches the
-    requested use case: comparisons=[[col]], group_by=grupo_segmented_v4). If
+    requested use case: comparisons=[[col]], group_by=group_segmented_quality). If
     group_by is None, falls back to a single-column heatmap of variable vs value
     proportions (marginal, not conditional on a group).
     """
