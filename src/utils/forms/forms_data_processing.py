@@ -319,7 +319,7 @@ def add_hake_gain_categorization(df):
         .otherwise(False)
         .alias('improvement_hake_gain_v2')
     ).with_columns(
-        pl.when(pl.col('puntuacion_tc_units_hake_gain') > 0)
+        pl.when(pl.col('score_tc_units_hake_gain') > 0)
         .then(True)
         .otherwise(False)
         .alias('mejora_units_hake_gain_v2')
