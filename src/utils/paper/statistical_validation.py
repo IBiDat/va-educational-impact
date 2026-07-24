@@ -679,7 +679,7 @@ def test_expa_ta_post(df, target="ExpA",
 def test_mejora_across_baseline_strata(
         df,
         stratum_col="score_tc_cat_pre",
-        outcome_col="mejora_hake_gain_v2",
+        outcome_col="improvement_hake_gain",
         stratum_order=("Low", "Medium", "High"),
         outcome_order=("Improve", "Not Improve", "Worsen")):
     print("=" * 82)

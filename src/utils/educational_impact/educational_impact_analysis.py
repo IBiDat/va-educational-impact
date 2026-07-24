@@ -121,7 +121,7 @@ def rename_df(
         pl.col("puntuacion_tc_cat_trad_scale_post").replace(mapping)
     )
     
-    #Replace mejora_hake_gain
+    #Replace improvement_hake_gain
     mapping_mejora = {
         "Mejora": "Improve",
         "No Mejora": "Not Improve",
@@ -129,7 +129,7 @@ def rename_df(
     }
     
     df = df.with_columns(
-        pl.col("mejora_hake_gain_v2").replace(mapping_mejora)
+        pl.col("improvement_hake_gain").replace(mapping_mejora)
     )
     
     #Replace WSDI_cat
