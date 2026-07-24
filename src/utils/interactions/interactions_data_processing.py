@@ -210,7 +210,7 @@ def process_interactions_data(raw_data):
             .qcut(3, labels=["Baja", "Media", "Alta"], allow_duplicates=True) # q33 and q67 are used
             .cast(pl.Utf8)
         )
-        .alias("chat_freq_use")
+        .alias("chat_freq_use_v2")
     ).with_columns(
         pl.when(pl.col("chat_interactions_counts") == 0)
         .then(pl.lit("No Usado"))
@@ -219,7 +219,7 @@ def process_interactions_data(raw_data):
             .qcut(2, labels=["Baja", "Alta"], allow_duplicates=True) # q50 is used
             .cast(pl.Utf8)
         )
-        .alias("chat_freq_use_v2")
+        .alias("chat_freq_use")
     )
     
     #Normalize tool_usage_score 
@@ -335,7 +335,7 @@ def generate_semantic_depth_index(client, model, temperature, raw_data, interact
 
 #########################################################################################################################################################
 
-def categorize_wsdi(wsdi: float) -> str:
+def categorize_wsdi_v2(wsdi: float) -> str:
     if wsdi <= 1.4:
         return "Irrelevante" # <= 1.4
     elif wsdi <= 2.2:
@@ -343,7 +343,7 @@ def categorize_wsdi(wsdi: float) -> str:
     else:
         return "Profunda" # > 2.2
 
-def categorize_wsdi_v2(wsdi: float) -> str:
+def categorize_wsdi(wsdi: float) -> str:
     if wsdi <= 0.5:
         return 'Out_of_context' # <= 0.5
     elif wsdi <= 1.4:
@@ -427,32 +427,32 @@ def add_wsdi_cheating_score(wsdi_df, cheating_df, interactions_df):
         on='id'
     ).with_columns(
         pl.col("WSDI").map_elements(
-            categorize_wsdi, 
-            return_dtype=pl.String
-        ).alias("WSDI_cat")
-    ).with_columns(
-        pl.col("WSDI").map_elements(
             categorize_wsdi_v2, 
             return_dtype=pl.String
         ).alias("WSDI_cat_v2")
+    ).with_columns(
+        pl.col("WSDI").map_elements(
+            categorize_wsdi, 
+            return_dtype=pl.String
+        ).alias("WSDI_cat")
     ).with_columns(
         pl.col("WSDI").map_elements(
             categorize_high_quality, 
             return_dtype=pl.Boolean
         ).alias("high_quality_use")
     ).with_columns(
-        pl.when(pl.col('WSDI_cat').is_null()).
-        then(pl.col('chat_freq_use')).
-        otherwise(pl.col('WSDI_cat')).
-        alias('WSDI_cat')
-    ).with_columns(
         pl.when(pl.col('WSDI_cat_v2').is_null()).
-        then(pl.col('chat_freq_use')).
+        then(pl.col('chat_freq_use_v2')).
         otherwise(pl.col('WSDI_cat_v2')).
         alias('WSDI_cat_v2')
     ).with_columns(
+        pl.when(pl.col('WSDI_cat').is_null()).
+        then(pl.col('chat_freq_use_v2')).
+        otherwise(pl.col('WSDI_cat')).
+        alias('WSDI_cat')
+    ).with_columns(
         pl.when(pl.col('high_quality_use').is_null()).
-        then(pl.col('chat_freq_use')).
+        then(pl.col('chat_freq_use_v2')).
         otherwise(pl.col('high_quality_use')).
         alias('high_quality_use')
     )
@@ -476,14 +476,14 @@ def segment_experimental_type(interactions_df):
     - AB: Frecuencia Alta / Calidad Baja
     - BB: Frecuencia no-Alta / Calidad Baja
     """
-    freq_alta = pl.col("chat_freq_use") == "Alta"
-    freq_baja = pl.col("chat_freq_use") == "Baja"
-    freq_media = pl.col("chat_freq_use") == "Media"
+    freq_alta = pl.col("chat_freq_use_v2") == "Alta"
+    freq_baja = pl.col("chat_freq_use_v2") == "Baja"
+    freq_media = pl.col("chat_freq_use_v2") == "Media"
 
-    freq_alta_v2 = pl.col("chat_freq_use_v2") == "Alta"
-    freq_baja_v2 = pl.col("chat_freq_use_v2") == "Baja"
+    freq_alta_v2 = pl.col("chat_freq_use") == "Alta"
+    freq_baja_v2 = pl.col("chat_freq_use") == "Baja"
 
-    freq_not_used = pl.col("chat_freq_use") == "No Usado"
+    freq_not_used = pl.col("chat_freq_use_v2") == "No Usado"
 
     calidad_alta = pl.col("high_quality_use") == True
     calidad_baja = pl.col("high_quality_use") == False
