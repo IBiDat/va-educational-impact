@@ -115,7 +115,7 @@ def get_exprs_tcc_ext(cols_tcc):
 def add_categorization(df):
     # Definimos las columnas que queremos categorizar
     cols_to_categorize = [
-        'puntuacion_tc', 
+        'score_tc', 
         'score_ta', 
         'score_tc_retention', 
         'score_tc_transfer'
@@ -150,14 +150,14 @@ def add_categorization(df):
         )
 
     df = df.with_columns(
-        pl.when(pl.col('puntuacion_tc') < 0.5).then(pl.lit('suspenso'))
-        .when((pl.col('puntuacion_tc') >= 0.5) & (pl.col('puntuacion_tc') < 0.6)).then(pl.lit('suficiente'))
-        .when((pl.col('puntuacion_tc') >= 0.6) & (pl.col('puntuacion_tc') < 0.7)).then(pl.lit('bien'))
-        .when((pl.col('puntuacion_tc') >= 0.7) & (pl.col('puntuacion_tc') < 0.9)).then(pl.lit('notable'))
+        pl.when(pl.col('score_tc') < 0.5).then(pl.lit('suspenso'))
+        .when((pl.col('score_tc') >= 0.5) & (pl.col('score_tc') < 0.6)).then(pl.lit('suficiente'))
+        .when((pl.col('score_tc') >= 0.6) & (pl.col('score_tc') < 0.7)).then(pl.lit('bien'))
+        .when((pl.col('score_tc') >= 0.7) & (pl.col('score_tc') < 0.9)).then(pl.lit('notable'))
         .otherwise(pl.lit('sobresaliente'))
         .alias('puntuacion_tc_cat_trad_scale')
     ).with_columns(
-        pl.when(pl.col('puntuacion_tc') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
+        pl.when(pl.col('score_tc') <= 0.7).then(pl.lit('suspenso-suficiente-bien'))
         .otherwise(pl.lit('notable-sobresaliente'))
         .alias('puntuacion_tc_cat_trad_scale_v2')
     ).with_columns(
@@ -221,7 +221,7 @@ def process_forms_data(raw_data_dir):
 
                     pl.col("id").str.split("-").list.get(0).alias("centro"),
 
-                    (pl.col('puntuación').str.splitn(" / ", 2).struct.field("field_0").cast(pl.Int64) / MAX_PUNTUACION_TC).alias('puntuacion_tc'),
+                    (pl.col('puntuación').str.splitn(" / ", 2).struct.field("field_0").cast(pl.Int64) / MAX_PUNTUACION_TC).alias('score_tc'),
 
                     (pl.sum_horizontal(exprs_ta) / len(cols_ta)).round(2).alias('score_ta'),
 

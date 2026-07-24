@@ -26,7 +26,7 @@ def analyze_experiment_results(processed_data_dict, hashes_dir):
     
     # 4. Extraer métricas (Media y Desviación Estándar) agrupadas por periodo y grupo
     cols_to_analyze = [
-        "puntuacion_tc", 
+        "score_tc", 
         "score_ta", 
         "indice_desempeño_global"
     ]
@@ -96,7 +96,7 @@ def analyze_experiment_results(processed_data_dict, hashes_dir):
 
 #########################################################################################################################################################
 
-def test_significacion_estadistica(df_completo, metrica="puntuacion_tc"):
+def test_significacion_estadistica(df_completo, metrica="score_tc"):
     """
     Realiza un T-test independiente en el post-test para la métrica elegida.
     """
@@ -136,7 +136,7 @@ def calcular_medias_puntuacion(df_resultados, df_grupos):
         # Si también quieres separar por "pre" y "post", añade "periodo" a esta lista:
         .group_by(["periodo", "grupo"]) 
         .agg([
-            pl.col("puntuacion_tc").mean().round(2).alias("media_tc_general"),
+            pl.col("score_tc").mean().round(2).alias("media_tc_general"),
             pl.col("score_tc_retention").mean().round(2).alias("media_tc_retencion"),
             pl.col("score_tc_transfer").mean().round(2).alias("media_tc_transferencia"),
             pl.col("score_ta").mean().round(2).alias("media_ta"),
@@ -159,7 +159,7 @@ def realizar_analisis_hake_normalizado(
 
     Args:
         df: DataFrame de Polars con columnas *_pre y *_post
-        constructo_base: prefijo de la variable (ej. 'puntuacion_tc')
+        constructo_base: prefijo de la variable (ej. 'score_tc')
         col_grupo: columna con 'Control' / 'Experimental'
     """
 
@@ -309,7 +309,7 @@ def analyze_experiment_results_centros(processed_data_dict, hashes_dir):
 
     # 4. Métricas
     cols_to_analyze = [
-        "puntuacion_tc",
+        "score_tc",
         "score_ta",
         "indice_desempeño_global"
     ]
@@ -378,7 +378,7 @@ def analyze_experiment_results_centros(processed_data_dict, hashes_dir):
 
 #########################################################################################################################################################
 
-def test_significacion_estadistica_centros(df_completo, metrica="puntuacion_tc"):
+def test_significacion_estadistica_centros(df_completo, metrica="score_tc"):
     """
     Realiza un T-test independiente en el post-test
     para cada centro y métrica elegida.

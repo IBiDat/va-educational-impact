@@ -93,7 +93,7 @@ def main():
         BASE_COLS = ['id', 'centro', 'grupo']
 
         METRICS_PRE_POST = [
-            'puntuacion_tc',
+            'score_tc',
             'score_ta',
             'score_tc_retention',
             'score_tc_transfer'
