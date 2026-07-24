@@ -112,7 +112,7 @@ def main():
                     'puntuacion_tc', 
                     'score_tc_retention', 
                     'score_tc_transfer',
-                    'puntuacion_ta'
+                    'score_ta'
                 ]
 
         df_cruzado = add_hake_gains(df_cruzado, metrics_to_hake, max_score=1.0)

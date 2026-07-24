@@ -116,7 +116,7 @@ def add_categorization(df):
     # Definimos las columnas que queremos categorizar
     cols_to_categorize = [
         'puntuacion_tc', 
-        'puntuacion_ta', 
+        'score_ta', 
         'score_tc_retention', 
         'score_tc_transfer'
     ]
@@ -223,7 +223,7 @@ def process_forms_data(raw_data_dir):
 
                     (pl.col('puntuación').str.splitn(" / ", 2).struct.field("field_0").cast(pl.Int64) / MAX_PUNTUACION_TC).alias('puntuacion_tc'),
 
-                    (pl.sum_horizontal(exprs_ta) / len(cols_ta)).round(2).alias('puntuacion_ta'),
+                    (pl.sum_horizontal(exprs_ta) / len(cols_ta)).round(2).alias('score_ta'),
 
                     (pl.sum_horizontal(exprs_tcc_rel) / len(cols_tcc_rel)).round(2).alias('puntuacion_tcc_rel') if 'post' in raw_filename else pl.lit(None).alias('puntuacion_tcc_rel'),
 

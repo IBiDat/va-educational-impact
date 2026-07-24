@@ -27,7 +27,7 @@ def analyze_experiment_results(processed_data_dict, hashes_dir):
     # 4. Extraer métricas (Media y Desviación Estándar) agrupadas por periodo y grupo
     cols_to_analyze = [
         "puntuacion_tc", 
-        "puntuacion_ta", 
+        "score_ta", 
         "indice_desempeño_global"
     ]
     
@@ -139,7 +139,7 @@ def calcular_medias_puntuacion(df_resultados, df_grupos):
             pl.col("puntuacion_tc").mean().round(2).alias("media_tc_general"),
             pl.col("score_tc_retention").mean().round(2).alias("media_tc_retencion"),
             pl.col("score_tc_transfer").mean().round(2).alias("media_tc_transferencia"),
-            pl.col("puntuacion_ta").mean().round(2).alias("media_ta"),
+            pl.col("score_ta").mean().round(2).alias("media_ta"),
             pl.col("indice_desempeño_global").mean().round(2).alias("media_indice_desempeño_global")
         ])
         .sort(["periodo", "grupo"])
@@ -310,7 +310,7 @@ def analyze_experiment_results_centros(processed_data_dict, hashes_dir):
     # 4. Métricas
     cols_to_analyze = [
         "puntuacion_tc",
-        "puntuacion_ta",
+        "score_ta",
         "indice_desempeño_global"
     ]
 

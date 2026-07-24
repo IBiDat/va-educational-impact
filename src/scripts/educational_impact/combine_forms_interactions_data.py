@@ -94,7 +94,7 @@ def main():
 
         METRICS_PRE_POST = [
             'puntuacion_tc',
-            'puntuacion_ta',
+            'score_ta',
             'score_tc_retention',
             'score_tc_transfer'
         ]
