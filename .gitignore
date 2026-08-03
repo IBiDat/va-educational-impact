@@ -1,6 +1,8 @@
 # Sensitive folders
 plots
-data
+data/centros
+data/forms
+data/hashes
 logs
 
 # Byte-compiled / optimized / DLL files

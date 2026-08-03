@@ -1,0 +1,34 @@
+## Resumen: Introducción a la Estadística Descriptiva
+
+El video explica qué es la estadística descriptiva y sus principales herramientas, usando como hilo conductor el ejemplo de una empresa que encuesta a sus empleados sobre cómo se desplazan al trabajo.
+
+---
+
+### ¿Qué es la estadística descriptiva?
+Permite **describir y resumir** un conjunto de datos de forma significativa, pero **sin extraer conclusiones** sobre una población más amplia (eso corresponde a la estadística inferencial).
+
+---
+
+### Los 4 componentes clave
+
+**1. Medidas de tendencia central**
+Resumen los datos en un valor representativo:
+- **Media**: suma de observaciones dividida entre el número de observaciones. Es sensible a valores atípicos.
+- **Mediana**: valor central de los datos ordenados. Es robusta frente a valores extremos.
+- **Moda**: valor que aparece con mayor frecuencia.
+
+**2. Medidas de dispersión**
+Describen cuánto se separan los datos entre sí:
+- **Desviación estándar**: distancia media de cada dato respecto a la media.
+- **Varianza**: la desviación estándar al cuadrado.
+- **Rango**: diferencia entre el valor máximo y el mínimo.
+- **Rango intercuartílico (IQR)**: abarca el 50% central de los datos (entre Q1 y Q3).
+
+**3. Tablas**
+- **Tabla de frecuencias**: muestra cuántas veces aparece cada valor (ej. cuántos empleados van en coche, bici, etc.).
+- **Tabla de contingencia (crosstab)**: analiza la relación entre dos variables categóricas (ej. medio de transporte según la fábrica donde trabajan).
+
+**4. Gráficos**
+Según el tipo de variable, se pueden usar gráficos de barras, circulares, histogramas, diagramas de caja, de violín o de arcoíris. El video hace una demostración práctica con la herramienta **datatab.es**.
+
+---

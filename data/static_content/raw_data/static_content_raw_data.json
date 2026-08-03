@@ -1,0 +1,193 @@
+{
+    "vid_metadata_col": {
+        "URL": "https://www.youtube.com/watch?v=AWzVi1wXn4k",
+        "Title": "¿Qué son las estadísticas descriptivas? Estadísticas descriptivas para principiantes.",
+        "Duration (s)": 579,
+        "Language": "es",
+        "File Size (bytes)": "N/A",
+        "GCP-file-link": "empty",
+        "Has Manual Subtitles": false,
+        "Subtitles": [
+            {
+                "lang": "es",
+                "content": "00:00:00 --> 00:00:05\nSpeaker 1: Si quieres entender por fin la estadística descriptiva, ¡éste es el lugar adecuado!\n\n00:00:05 --> 00:00:23\nSpeaker 1: ¿Por qué es tan importante la estadística descriptiva? Supongamos que una empresa quiere saber cómo se desplazan sus empleados al trabajo. Por lo que la empresa crea una encuesta para responder a esta pregunta. Una vez recogidos suficientes datos, estos pueden analizarse mediante la estadística descriptiva.\n\n00:00:23 --> 00:00:33\nSpeaker 1: Pero, ¿qué es la estadística descriptiva? La estadística descriptiva pretende describir y resumir un conjunto de datos de forma significativa.\n\n00:00:33 --> 00:00:54\nSpeaker 1: Pero es importante tener en cuenta que la estadística descriptiva solo describe los datos recogidos, sin sacar conclusiones sobre una población más amplia. En pocas palabras, solo porque sepamos cómo llegan al trabajo algunas personas de una empresa,\n\n00:00:54 --> 00:01:00\nSpeaker 1: no podemos decir cómo llegan al trabajo todos los trabajadores de la empresa. Esta es la tarea de la estadística inferencial, de la que hablaremos más adelante.\n\n00:01:00 --> 00:01:14\nSpeaker 1: Para describir datos descriptivamente, ahora veremos los cuatro componentes clave: medidas de tendencia central, medidas de dispersión, tablas de frecuencia y gráficos. Empecemos con la primera: medidas de tendencia central.\n\n00:01:14 --> 00:01:22\nSpeaker 1: Las medidas de tendencia central son, por ejemplo, la media, la mediana y la moda. Veamos primero la media.\n\n00:01:22 --> 00:01:29\nSpeaker 1: La media aritmética es la suma de todas las observaciones dividida por el número de observaciones.\n\n00:01:29 --> 00:01:45\nSpeaker 1: Un ejemplo: imaginemos que tenemos las notas de cinco alumnos. Para hallar la puntuación media sumamos todas las puntuaciones y las dividimos por el número de notas, cinco en este caso. La nota media de estos cinco alumnos es, por tanto, 86,6.\n\n00:01:45 --> 00:01:52\nSpeaker 1: ¿Y la mediana? Cuando los valores de un conjunto de datos están ordenados de forma ascendente, la mediana es el valor central.\n\n00:01:52 --> 00:02:02\nSpeaker 1: Si hay un número impar de datos, la mediana es simplemente el valor central. Si el número de datos es par, la mediana es la media de los dos valores centrales.\n\n00:02:02 --> 00:02:11\nSpeaker 1: Es importante destacar que la mediana es resistente a los valores extremos o atípicos. Veamos este ejemplo concreto:\n\n00:02:11 --> 00:02:19\nSpeaker 1: No importa la altura de la última persona. La persona en la posición central sigue siendo la misma, por lo que la mediana no cambia.\n\n00:02:19 --> 00:02:29\nSpeaker 1: Pero si nos fijamos en la media, sí tiene efecto la altura de la última persona. Por lo tanto, la media no es robusta frente a los valores atípicos.\n\n00:02:29 --> 00:02:36\nSpeaker 1: Sigamos con la moda. La moda se refiere al valor o valores que aparecen con mayor frecuencia en un conjunto de datos.\n\n00:02:36 --> 00:02:46\nSpeaker 1: Por ejemplo, si 14 personas van al trabajo en coche, seis en bicicleta, cinco a pie y cinco en transporte público, el coche es el medio más frecuente.\n\n00:02:46 --> 00:02:55\nSpeaker 1: Genial, continuemos con las medidas de dispersión. Las medidas de dispersión describen el grado de separación de los valores de un conjunto de datos.\n\n00:02:55 --> 00:03:06\nSpeaker 1: Las medidas de dispersión son, por ejemplo, la varianza y la desviación estándar, el rango y el rango intercuartílico. Empecemos con la desviación estándar.\n\n00:03:06 --> 00:03:12\nSpeaker 1: La desviación estándar indica la distancia media entre cada dato concreto y la media. Pero, ¿qué significa esto?\n\n00:03:12 --> 00:03:22\nSpeaker 1: Cada persona tiene alguna desviación de la media. Ahora queremos saber cuánto se desvían las personas del valor medio por término medio.\n\n00:03:22 --> 00:03:31\nSpeaker 1: En este ejemplo, la desviación media con respecto al valor medio es de 11,5 cm. Esto es lo que nos indica la desviación típica.\n\n00:03:31 --> 00:03:50\nSpeaker 1: Para calcular la desviación estándar, también conocida como desviación típica, podemos utilizar esta ecuación: sigma es la desviación típica, n es el número de personas, x es la talla de cada persona y la x con la barra es el valor medio de las alturas de todas las personas.\n\n00:03:50 --> 00:04:02\nSpeaker 1: Pero atención, hay dos ecuaciones ligeramente diferentes para la desviación estándar. En una dividimos por el valor n, mientras que en la otra dividimos por n menos uno.\n\n00:04:02 --> 00:04:10\nSpeaker 1: Para simplificar: si nuestra encuesta no cubre toda la población, siempre utilizamos esta ecuación para estimar la desviación típica.\n\n00:04:10 --> 00:04:18\nSpeaker 1: Del mismo modo, si hemos realizado un estudio clínico, también utilizamos esta ecuación para estimar la desviación típica.\n\n00:04:18 --> 00:04:23\nSpeaker 1: Pero, ¿cuál es la diferencia entre la desviación típica y la varianza?\n\n00:04:23 --> 00:04:33\nSpeaker 1: Como ya sabemos, la desviación típica es la media cuadrática de la distancia a la media. La varianza ahora es la desviación estándar al cuadrado.\n\n00:04:33 --> 00:04:43\nSpeaker 1: Si quieres saber más detalles sobre la desviación típica y la varianza, ve nuestro vídeo. Pasemos al rango y al rango intercuartílico. Es fácil de entender.\n\n00:04:43 --> 00:04:47\nSpeaker 1: El rango es simplemente la diferencia entre el valor máximo y el mínimo.\n\n00:04:47 --> 00:05:13\nSpeaker 1: El rango intercuartílico representa el 50% central de los datos. Es la diferencia entre el primer cuartil, Q1, y el tercer cuartil, Q3. Por lo tanto, el 25% de los valores son menores de los que están dentro del rango intercuartílico y el 25% de los valores son mayores. El rango intercuartílico contiene exactamente el 50% medio de los valores.\n\n00:05:13 --> 00:05:20\nSpeaker 1: Antes de llegar a los dos últimos puntos, comparemos brevemente las medidas de tendencia central y las medidas de dispersión.\n\n00:05:20 --> 00:05:36\nSpeaker 1: Supongamos que medimos la tensión arterial de los pacientes. Las medidas de tendencia central proporcionan un valor único que representa todo el conjunto de datos, ayudando a identificar un valor central en torno al cual tienden a agruparse los puntos de datos.\n\n00:05:36 --> 00:05:50\nSpeaker 1: Las medidas de dispersión, como la desviación típica, el rango y el rango intercuartílico, indican el grado de dispersión de los puntos de datos, si están muy juntos alrededor del centro o muy alejados de él.\n\n00:05:50 --> 00:06:02\nSpeaker 1: En resumen, mientras que las medidas de tendencia central proporcionan un punto central del conjunto de datos, las medidas de dispersión describen cómo se distribuyen los datos alrededor de ese centro.\n\n00:06:02 --> 00:06:09\nSpeaker 1: Pasemos a las tablas. Aquí veremos las más importantes: las tablas de frecuencia y las tablas de contingencia.\n\n00:06:09 --> 00:06:16\nSpeaker 1: Una tabla de frecuencias muestra la frecuencia con la que aparece cada valor distinto en un conjunto de datos. Veamos el ejemplo del principio.\n\n00:06:16 --> 00:06:29\nSpeaker 1: Una empresa realizó una encuesta entre sus empleados para saber cómo llegaban al trabajo. Las opciones dadas fueron coche, bicicleta, a pie y transporte público.\n\n00:06:29 --> 00:06:37\nSpeaker 1: Estos son los resultados de 30 empleados. El primero contestó coche, el siguiente a pie y así sucesivamente.\n\n00:06:37 --> 00:06:54\nSpeaker 1: Ahora podemos crear una tabla de frecuencias para resumir estos datos. Para ello, simplemente introducimos las cuatro opciones posibles: coche, bicicleta, a pie y transporte público en la primera columna y luego contamos con qué frecuencia se produjeron.\n\n00:06:54 --> 00:07:06\nSpeaker 1: De la tabla se desprende que el medio de transporte más común entre los empleados es el coche, con 14 empleados que lo prefieren. La tabla de frecuencias proporciona así un resumen claro y conciso de los datos.\n\n00:07:06 --> 00:07:16\nSpeaker 1: Pero, ¿y si tenemos no solo una, sino dos variables categóricas? Aquí es donde entra en juego la tabla de contingencia, también llamada crosstab.\n\n00:07:16 --> 00:07:27\nSpeaker 1: Imaginemos que la empresa no tiene una fábrica, sino dos: una en Detroit y otra en Cleveland. Así que también preguntamos a los empleados en qué lugar trabajan.\n\n00:07:27 --> 00:07:33\nSpeaker 1: Si queremos visualizar ambas variables, podemos utilizar una tabla de contingencia.\n\n00:07:33 --> 00:07:49\nSpeaker 1: Una tabla de contingencia permite analizar y comparar la relación entre dos variables categóricas. Las filas de una tabla de contingencia representan las categorías de una variable, mientras que las columnas representan las categorías de otra variable.\n\n00:07:49 --> 00:08:02\nSpeaker 1: Cada celda de la tabla muestra el número de observaciones que corresponden a la combinación de categorías correspondiente. Por ejemplo, la primera celda muestra que coche y Detroit se contestaron seis veces.\n\n00:08:02 --> 00:08:06\nSpeaker 1: ¿Y qué pasa con los gráficos? Veamos los más importantes.\n\n00:08:06 --> 00:08:21\nSpeaker 1: Para ver este apartado, vamos a utilizar datatab.es. Si lo deseas, puedes cargar este conjunto de datos de ejemplo con el enlace que aparece en la descripción del vídeo o simplemente copiar tus propios datos en la tabla.\n\n00:08:21 --> 00:08:36\nSpeaker 1: Aquí abajo puedes ver las variables distancia al trabajo, modo de transporte y lugar. DATAtab te da una pista sobre el nivel de medición, pero también puedes cambiarlo aquí. Enseguida veremos qué significa el nivel de medición.\n\n00:08:36 --> 00:08:46\nSpeaker 1: Ahora, si solo hacemos clic en modo de transporte, obtendremos una tabla de frecuencias y también podremos visualizar los valores porcentuales.\n\n00:08:46 --> 00:09:00\nSpeaker 1: Si nos desplazamos hacia abajo, obtendremos un gráfico de barras y un gráfico circular. Por ejemplo, podemos especificar si queremos mostrar las frecuencias o los porcentajes o si las barras deben ser verticales u horizontales.\n\n00:09:00 --> 00:09:14\nSpeaker 1: Si además seleccionamos lugar, obtendremos aquí una tabla de contingencia y un diagrama de barras agrupadas para los diagramas. Aquí podemos especificar si queremos que el gráfico esté agrupado o apilado.\n\n00:09:14 --> 00:09:28\nSpeaker 1: Si hacemos clic en distancia al trabajo y modo de transporte, obtendremos un gráfico de barras en el que la altura de la barra muestre el valor medio de los grupos individuales. Aquí también podemos mostrar la dispersión.\n\n00:09:28 --> 00:09:38\nSpeaker 1: También obtenemos un histograma, un diagrama de caja, un diagrama de violín y un diagrama de arcoíris. Espero que te haya gustado este vídeo.",
+                "type": "gemini"
+            }
+        ]
+    },
+    "reviewed_col": {
+        "Language": "es",
+        "Model": "gemini-3-flash-preview",
+        "URL": "https://www.youtube.com/watch?v=AWzVi1wXn4k",
+        "Material": {
+            "flashcards": [
+                {
+                    "concept": "Estadística Descriptiva",
+                    "description": "Se define como el conjunto de técnicas destinadas a describir y resumir un conjunto de datos de forma significativa, limitándose a los datos recogidos sin realizar inferencias externas (00:27-00:33).",
+                    "start_interval_fixed": "00:00:23",
+                    "end_interval_fixed": "00:00:41"
+                },
+                {
+                    "concept": "Media Aritmética",
+                    "description": "Representa el promedio del conjunto y se calcula mediante la suma de todas las observaciones dividida por el número total de observaciones (n) (01:22-01:28).",
+                    "start_interval_fixed": "00:01:21",
+                    "end_interval_fixed": "00:01:28"
+                },
+                {
+                    "concept": "Mediana",
+                    "description": "Es el valor central cuando los datos están ordenados de forma ascendente. Su propiedad más destacada es su resistencia o robustez frente a valores atípicos o extremos (01:46-02:08).",
+                    "start_interval_fixed": "00:01:44",
+                    "end_interval_fixed": "00:02:08"
+                },
+                {
+                    "concept": "Moda",
+                    "description": "Se refiere al valor o valores que aparecen con mayor frecuencia en una distribución de datos, siendo especialmente útil para variables cualitativas (02:30-02:35).",
+                    "start_interval_fixed": "00:02:29",
+                    "end_interval_fixed": "00:02:35"
+                },
+                {
+                    "concept": "Desviación Típica",
+                    "description": "Medida de dispersión que indica la distancia media entre cada punto de dato individual y la media del conjunto, reflejando el grado de alejamiento respecto al centro (03:06-03:11).",
+                    "start_interval_fixed": "00:03:04",
+                    "end_interval_fixed": "00:03:11"
+                }
+            ],
+            "multiple_choice_questions": [
+                {
+                    "question": "¿Por qué se prefiere el uso de la mediana sobre la media en distribuciones con valores extremadamente altos o bajos?",
+                    "distractors": [
+                        "Porque la mediana siempre coincide con la moda en distribuciones normales",
+                        "Porque el cálculo de la mediana no requiere ordenar los datos previamente",
+                        "Porque la media aritmética es incapaz de procesar valores decimales"
+                    ],
+                    "correct_answer": "Porque la mediana es resistente a los valores atípicos, manteniendo su valor central independientemente de los extremos",
+                    "explanation": "El vídeo demuestra visualmente que si la altura de una persona en el extremo aumenta drásticamente, la mediana permanece inalterada en la posición central, mientras que la media se desplaza significativamente hacia arriba (02:04-02:28).",
+                    "start_interval_fixed": "00:02:03",
+                    "end_interval_fixed": "00:02:28",
+                    "options": [
+                        "Porque el cálculo de la mediana no requiere ordenar los datos previamente",
+                        "Porque la mediana siempre coincide con la moda en distribuciones normales",
+                        "Porque la mediana es resistente a los valores atípicos, manteniendo su valor central independientemente de los extremos",
+                        "Porque la media aritmética es incapaz de procesar valores decimales"
+                    ]
+                },
+                {
+                    "question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?",
+                    "distractors": [
+                        "La estadística descriptiva solo utiliza tablas y la inferencial solo utiliza gráficos avanzados",
+                        "La estadística descriptiva es para muestras pequeñas y la inferencial para censos poblacionales completos",
+                        "La inferencial se centra en resumir datos del pasado y la descriptiva en predecir el futuro"
+                    ],
+                    "correct_answer": "La estadística descriptiva solo resume los datos recogidos, mientras que la inferencial saca conclusiones sobre una población más amplia",
+                    "explanation": "Se explica que conocer cómo viajan algunos empleados (descriptiva) no permite afirmar cómo viajan todos los trabajadores de la empresa sin recurrir a la estadística inferencial (00:34-00:59).",
+                    "start_interval_fixed": "00:00:34",
+                    "end_interval_fixed": "00:00:59",
+                    "options": [
+                        "La estadística descriptiva solo resume los datos recogidos, mientras que la inferencial saca conclusiones sobre una población más amplia",
+                        "La estadística descriptiva es para muestras pequeñas y la inferencial para censos poblacionales completos",
+                        "La estadística descriptiva solo utiliza tablas y la inferencial solo utiliza gráficos avanzados",
+                        "La inferencial se centra en resumir datos del pasado y la descriptiva en predecir el futuro"
+                    ]
+                },
+                {
+                    "question": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?",
+                    "distractors": [
+                        "El 25% de los valores más bajos",
+                        "El 75% de la distribución total",
+                        "El 100% de los datos excluyendo los valores mínimos"
+                    ],
+                    "correct_answer": "El 50% central de los datos, situado entre el primer y el tercer cuartil",
+                    "explanation": "El rango intercuartílico se define como la diferencia entre Q1 y Q3, dejando fuera el 25% inferior y el 25% superior de la muestra, capturando así la mitad central de las observaciones (04:47-05:12).",
+                    "start_interval_fixed": "00:04:47",
+                    "end_interval_fixed": "00:05:12",
+                    "options": [
+                        "El 100% de los datos excluyendo los valores mínimos",
+                        "El 25% de los valores más bajos",
+                        "El 50% central de los datos, situado entre el primer y el tercer cuartil",
+                        "El 75% de la distribución total"
+                    ]
+                }
+            ],
+            "open_ended_questions": [
+                {
+                    "id": "openended_0",
+                    "question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+                    "start_interval_fixed": "00:04:18",
+                    "end_interval_fixed": "00:04:33"
+                },
+                {
+                    "id": "openended_1",
+                    "question": "Evalúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+                    "start_interval_fixed": "00:07:11",
+                    "end_interval_fixed": "00:08:01"
+                }
+            ],
+            "summary": {
+                "summary": "El vídeo constituye una guía avanzada sobre estadística descriptiva, comenzando por diferenciarla de la inferencial (00:54). Se detallan las medidas de tendencia central (media, mediana y moda) (01:14), destacando la robustez de la mediana ante valores extremos (02:04). Posteriormente, se analizan las medidas de dispersión, incluyendo la varianza, el rango y la desviación típica, explicando el ajuste de n-1 para muestras poblacionales (03:52). El contenido concluye con métodos de organización de datos mediante tablas de frecuencia y contingencia (06:03), así como representaciones gráficas esenciales como histogramas y diagramas de caja (08:04)."
+            },
+            "evaluation_questions": {
+                "questions": [
+                    {
+                        "question": "¿Qué ajuste matemático se debe realizar en la fórmula de la desviación típica si la encuesta no cubre a toda la población objetivo?",
+                        "expected_answer": "Se debe dividir la suma de los cuadrados por n-1 en lugar de por n.",
+                        "explanation": "El vídeo especifica que para estimar la desviación típica poblacional a partir de una muestra, se utiliza n-1 para obtener un estimador insesgado (03:52-04:17).",
+                        "pass_if": "El estudiante menciona explícitamente el uso de n menos uno en el denominador.",
+                        "fail_if": "El estudiante afirma que se usa n o que no hay diferencia entre muestra y población.",
+                        "start_interval_fixed": "00:03:52",
+                        "end_interval_fixed": "00:04:17"
+                    },
+                    {
+                        "question": "¿Cómo se define la varianza en relación con la desviación típica según el material presentado?",
+                        "expected_answer": "La varianza es la desviación típica elevada al cuadrado.",
+                        "explanation": "Se establece que la varianza es simplemente el cuadrado de la medida de distancia media denominada desviación estándar (04:28-04:32).",
+                        "pass_if": "Identifica que la varianza es el cuadrado de la desviación típica o estándar.",
+                        "fail_if": "Indica que es la raíz cuadrada o que no tienen relación directa.",
+                        "start_interval_fixed": "00:04:22",
+                        "end_interval_fixed": "00:04:33"
+                    },
+                    {
+                        "question": "¿Cuál es el procedimiento para hallar la mediana en un conjunto de datos que contiene un número par de observaciones?",
+                        "expected_answer": "Se debe calcular la media aritmética de los dos valores centrales una vez ordenados los datos.",
+                        "explanation": "El vídeo aclara que con n par, la mediana no es un valor individual de la muestra, sino el promedio de los dos que ocupan el centro (01:57-02:01).",
+                        "pass_if": "Explica el promedio de los dos valores centrales.",
+                        "fail_if": "Dice que se toma el valor más alto o que la mediana no se puede calcular en números pares.",
+                        "start_interval_fixed": "00:01:57",
+                        "end_interval_fixed": "00:02:01"
+                    },
+                    {
+                        "question": "¿Qué porcentaje de los datos se sitúa por debajo del primer cuartil (Q1) en una distribución?",
+                        "expected_answer": "El 25%.",
+                        "explanation": "Al definir el rango intercuartílico, se indica que el 25% de los valores son menores que el límite inferior del rango (Q1) (04:58-05:01).",
+                        "pass_if": "Responde correctamente que es el 25%.",
+                        "fail_if": "Responde 50% o cualquier otro valor incorrecto.",
+                        "start_interval_fixed": "00:04:58",
+                        "end_interval_fixed": "00:05:12"
+                    },
+                    {
+                        "question": "¿Qué herramienta gráfica se utiliza para visualizar simultáneamente la mediana, los cuartiles y la dispersión de los datos?",
+                        "expected_answer": "El diagrama de caja o Boxplot.",
+                        "explanation": "Hacia el final del vídeo se presentan visualizaciones avanzadas donde el diagrama de caja se destaca para este propósito (09:29-09:31).",
+                        "pass_if": "Menciona diagrama de caja o boxplot.",
+                        "fail_if": "Menciona diagrama de barras o circular únicamente.",
+                        "start_interval_fixed": "00:09:29",
+                        "end_interval_fixed": "00:09:31"
+                    }
+                ],
+                "final_decision": {
+                    "rule": "Si el estudiante responde correctamente al menos 4 de las 5 preguntas de evaluación (80%), el resultado global es Pass; en caso contrario, Fail."
+                }
+            }
+        },
+        "Time Elapsed (s)": 43.21,
+        "Timestamp": "2026-02-02T12:31:06.152101",
+        "Title": "¿Qué son las estadísticas descriptivas? Estadísticas descriptivas para principiantes.",
+        "Translations": {
+            "en": false,
+            "es": true,
+            "pt": false,
+            "de": false,
+            "pl": false
+        },
+        "allow_eval_questions": false
+    }
+}

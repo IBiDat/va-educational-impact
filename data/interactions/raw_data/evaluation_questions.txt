@@ -1,0 +1,44 @@
+QUESTION 1:
+question: ¿Qué ajuste matemático se debe realizar en la fórmula de la desviación típica si la encuesta no cubre a toda la población objetivo?
+expected_answer: Se debe dividir la suma de los cuadrados por n-1 en lugar de por n.
+explanation: El vídeo especifica que para estimar la desviación típica poblacional a partir de una muestra, se utiliza n-1 para obtener un estimador insesgado (03:52-04:17).
+pass_if: El estudiante menciona explícitamente el uso de n menos uno en el denominador.
+fail_if: El estudiante afirma que se usa n o que no hay diferencia entre muestra y población.
+start_interval_fixed: 00:03:52
+end_interval_fixed: 00:04:17
+
+QUESTION 2:
+question: ¿Cómo se define la varianza en relación con la desviación típica según el material presentado?
+expected_answer: La varianza es la desviación típica elevada al cuadrado.
+explanation: Se establece que la varianza es simplemente el cuadrado de la medida de distancia media denominada desviación estándar (04:28-04:32).
+pass_if: Identifica que la varianza es el cuadrado de la desviación típica o estándar.
+fail_if: Indica que es la raíz cuadrada o que no tienen relación directa.
+start_interval_fixed: 00:04:22
+end_interval_fixed: 00:04:33
+
+QUESTION 3:
+question: ¿Cuál es el procedimiento para hallar la mediana en un conjunto de datos que contiene un número par de observaciones?
+expected_answer: Se debe calcular la media aritmética de los dos valores centrales una vez ordenados los datos.
+explanation: El vídeo aclara que con n par, la mediana no es un valor individual de la muestra, sino el promedio de los dos que ocupan el centro (01:57-02:01).
+pass_if: Explica el promedio de los dos valores centrales.
+fail_if: Dice que se toma el valor más alto o que la mediana no se puede calcular en números pares.
+start_interval_fixed: 00:01:57
+end_interval_fixed: 00:02:01
+
+QUESTION 4:
+question: ¿Qué porcentaje de los datos se sitúa por debajo del primer cuartil (Q1) en una distribución?
+expected_answer: El 25%.
+explanation: Al definir el rango intercuartílico, se indica que el 25% de los valores son menores que el límite inferior del rango (Q1) (04:58-05:01).
+pass_if: Responde correctamente que es el 25%.
+fail_if: Responde 50% o cualquier otro valor incorrecto.
+start_interval_fixed: 00:04:58
+end_interval_fixed: 00:05:12
+
+QUESTION 5:
+question: ¿Qué herramienta gráfica se utiliza para visualizar simultáneamente la mediana, los cuartiles y la dispersión de los datos?
+expected_answer: El diagrama de caja o Boxplot.
+explanation: Hacia el final del vídeo se presentan visualizaciones avanzadas donde el diagrama de caja se destaca para este propósito (09:29-09:31).
+pass_if: Menciona diagrama de caja o boxplot.
+fail_if: Menciona diagrama de barras o circular únicamente.
+start_interval_fixed: 00:09:29
+end_interval_fixed: 00:09:31
