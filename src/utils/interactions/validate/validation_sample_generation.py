@@ -3,14 +3,17 @@ import polars as pl
 
 def load_raw_data(
     raw_data_path: str,
-    interactions_processed_data_path: str
-) -> tuple[dict[str, dict], pl.DataFrame]:
+    interactions_processed_data_path: str,
+    interaction_type_data_path: str
+) -> tuple[dict[str, dict], pl.DataFrame, pl.DataFrame]:
     with open(raw_data_path, "r", encoding="utf-8") as f:
         raw_data = json.load(f)
     
     interactions_processed_data = pl.read_parquet(interactions_processed_data_path)
     
-    return raw_data, interactions_processed_data
+    interactions_type_data = pl.read_parquet(interaction_type_data_path)
+    
+    return raw_data, interactions_processed_data, interactions_type_data
 
 def filter_users_for_validation_sample(
     raw_data: dict[str, dict],
@@ -30,3 +33,34 @@ def filter_users_for_validation_sample(
     
     
     return filtered_raw_data
+
+def filter_interactions_type_for_validation(
+    interactions_type_data: pl.DataFrame,
+    sample_size: int
+) -> pl.DataFrame:
+    #Filter conversations with TRANSFERENCE type of interaction
+    transfer = interactions_type_data.filter(
+        pl.col("prompt_type") == "TRANSFERENCE"
+    )
+    
+    #Sample the remaining conversations until reaching sample_size
+    rest = interactions_type_data.filter(
+        pl.col("prompt_type") != "TRANSFERENCE"
+    ).sample(
+        sample_size - transfer.height,
+        seed=33
+    )
+    
+    #Concat and suffle
+    filtered_interactions_type: pl.DataFrame = pl.concat(
+        [
+            transfer,
+            rest
+        ]
+    ).sample(
+        fraction=1.0,
+        shuffle=True,
+        seed=33
+    )
+    
+    return filtered_interactions_type
