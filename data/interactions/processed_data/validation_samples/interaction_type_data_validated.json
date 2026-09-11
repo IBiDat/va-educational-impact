@@ -1,0 +1,202 @@
+{
+    "JoseGarciaNieto-7sg_0": {
+        "user_input": "¿Que quiere decir que la mediana es resistente a valores extremos o atípicos?",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-k69_1": {
+        "user_input": "no he entendido el rango, me lo explicas?",
+        "interaction_type": "RETENTION"
+    },
+    "RamiroMaeztu-pu9_4": {
+        "user_input": "hazlo con los graficos",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "Laguna-2uy_3": {
+        "user_input": "para que sirve cada tipo de grafico",
+        "interaction_type": "RETENTION"
+    },
+    "RamiroMaeztu-4bc_7": {
+        "user_input": "menos d 200 palabras",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "RamiroMaeztu-qf2_2": {
+        "user_input": "cual es el grafico que mas informacion da y el mas util",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-chk_3": {
+        "user_input": "no hay una formula mas facil que la del video para calcular",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "JesusMaria-5mz_2": {
+        "user_input": "¿Entonces se les preguntaria dos datos a las personas? es decir lugar y como van, no",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "JoseGarciaNieto-5zg_0": {
+        "user_input": "Qué era la medidas de tendencia central?",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-k69_2": {
+        "user_input": "y cuando tengo que restar n-1 para calcularlo",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "Laguna-hxh_3": {
+        "user_input": "tablas de contingencia",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-uy6_0": {
+        "user_input": "que es la estadistica descriptiva?",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-am7_2": {
+        "user_input": "A ver, dime si estoy en lo correcto, la varianza y la desviación típica estan relacionada pues la varianza lo que hace es primero recoger los datos de cuanta diferencia existe entre un dato en concreto del conjunto y la media del conjunto, y la desviación lo que hace es sacar la media de las varianzas para sacar un \"rango\" de esto",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "JoseGarciaNieto-k69_0": {
+        "user_input": "para usar la estadística descriptiva necesitas elegir una buena muestra, verdad?",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "JoseGarciaNieto-5zg_8": {
+        "user_input": "vale, pero explicalo mucho mas sencilo, para que lo entienda una persona de 10 años",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-yi0_1": {
+        "user_input": "Que es la mediana enuna frase",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-hxh_5": {
+        "user_input": "sabias darme ejemplos de cada cosa",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-chk_2": {
+        "user_input": "de que va el video",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-jxz_1": {
+        "user_input": "no me quedo claro que era la moda, lo vuelves a explicar",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-am7_0": {
+        "user_input": "A qué se refiere con \"preferente\", la mediana y la media no muestran valores diferentes? Si la media es el valor dado por la suma de todos los valores recogios dividido entre la cantidad de datos recogios y la mediana solo el valor central de todo el conjunto de datos",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-ca9_0": {
+        "user_input": "que es la estadistica inferencial",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-wxc_2": {
+        "user_input": "se puede hacer una tabla de contingencia con tres o má variables?",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-ioy_3": {
+        "user_input": "que diferencia hay entre una tabla de frecuencia y una tabla de contingencia",
+        "interaction_type": "RETENTION"
+    },
+    "RamiroMaeztu-pu9_2": {
+        "user_input": "haz lo mismo con los distintos tipos de rangos  distancias",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "JesusMaria-f6g_1": {
+        "user_input": "Que es la moda",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-d21_0": {
+        "user_input": "puedes explicarme más a fondo la desviación media?",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-lqw_1": {
+        "user_input": "que es datatab",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-4fh_0": {
+        "user_input": "De que trata el video",
+        "interaction_type": "RETENTION"
+    },
+    "RamiroMaeztu-4bc_5": {
+        "user_input": "q es la desviacion??",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-hxh_0": {
+        "user_input": "q es la estadística descriptiva",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-wxc_3": {
+        "user_input": "diferencia entre variacion y desv tipica",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-zfa_0": {
+        "user_input": "que son valores atipicos",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-5mz_1": {
+        "user_input": "¿porque 11,5 cm ?",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-zoj_2": {
+        "user_input": "Cual de las dos ecuaciones es más preccisa?",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "JesusMaria-79x_0": {
+        "user_input": "cuales son las medidas de dispersión",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-zoj_0": {
+        "user_input": "Como puede haber un caso bimodal?",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-xpe_2": {
+        "user_input": "Sí, ponme un ejemplo más sencillo. Haz las respuestas más cortas y sencillas",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-2uy_2": {
+        "user_input": "no he entendido el rango intercuartilico",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-siq_1": {
+        "user_input": "que es un diagrama de caja o de violin y por qué la necesidad de tantos tipos de gráfica",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-uy6_1": {
+        "user_input": "mas breve",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "JesusMaria-f16_0": {
+        "user_input": "¿Cómo funciona la varianza?",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-ioy_2": {
+        "user_input": "Como se calcula la desviacion media",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-5zg_7": {
+        "user_input": "como se dibujaria la tabla de contingencia",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-xpe_4": {
+        "user_input": "Explícame mejor cómo crear esos gráficos de frecuencia en datatab.es como dijo el video",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "RamiroMaeztu-g43_0": {
+        "user_input": "no entiendo la desviacion estandar",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-rjb_6": {
+        "user_input": "Análisis de Relación entre Variables: A diferencia de una tabla de frecuencia simple (que solo cuenta una cosa, como \"cuánta gente va en coche\"), la tabla de contingencia permite cruzar información. En el ejemplo del video, se cruza la variable geográfica (lugar de trabajo: Detroit o Cleveland) con la preferencia de transporte (coche, bicicleta, a pie, etc.). Identificación de Patrones Específicos: Permite observar si el comportamiento cambia según la ubicación. Por ejemplo, podrías descubrir que en una ciudad (Detroit) el uso del coche es mayor que en otra (Cleveland), algo que no verías si analizaras los datos de transporte de forma global. Estructura de Celdas: Cada celda de la tabla muestra el número de observaciones que corresponden a una combinación específica (por ejemplo, empleados que trabajan en Detroit y usan coche). Esto facilita la visualización de qué combinaciones son las más frecuentes. Comparación Visual: El video menciona que estas tablas son la base para crear gráficos más complejos, como los diagramas de barras agrupadas, que ayudan a ver de forma rápida y visual esos patrones de comportamiento entre distintas sedes o regiones. resumeme esto en un parrafo no muy grande",
+        "interaction_type": "TRANSFERENCE"
+    },
+    "Laguna-o61_2": {
+        "user_input": "explicame el video",
+        "interaction_type": "RETENTION"
+    },
+    "Laguna-2uy_0": {
+        "user_input": "que es un valor extremo y atípico",
+        "interaction_type": "RETENTION"
+    },
+    "JoseGarciaNieto-7sg_1": {
+        "user_input": "Explícame las medidas de tendencia porfavor.",
+        "interaction_type": "RETENTION"
+    },
+    "JesusMaria-2b0_0": {
+        "user_input": "Que diferencia hay entre la media y la mediana?",
+        "interaction_type": "RETENTION"
+    }
+}
