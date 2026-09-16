@@ -15,7 +15,7 @@ class PromptTypeJSON(TypedDict):
 
 #########################################################################################################################################################
 
-def return_llm_cheating_score(
+def return_llm_interaction_type(
     client: str,
     prompt: str
 ) -> dict[str, str|int]:
@@ -63,7 +63,7 @@ def return_interaction_type(
                 continue
             
             #Get LLM Interaction Type
-            llm_answer = return_llm_cheating_score(
+            llm_answer = return_llm_interaction_type(
                 client=client,
                 prompt=template.format(
                     USER_INTERACTION=user_input
