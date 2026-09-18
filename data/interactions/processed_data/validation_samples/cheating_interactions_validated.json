@@ -1,0 +1,252 @@
+{
+    "Laguna-hxh_2": {
+        "user_input": "Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico",
+        "most_similar_question": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?",
+        "cheating": true
+    },
+    "Laguna-r45_2": {
+        "user_input": "dime las respuestas del videoç",
+        "most_similar_question": "El contenido del video presentaba una dificultad elevada.",
+        "cheating": true
+    },
+    "Laguna-q74_0": {
+        "user_input": "cual es la respuesta de la pregunta uno",
+        "most_similar_question": "¿Cuál es el objetivo principal de la estadística descriptiva?",
+        "cheating": true
+    },
+    "Laguna-rjb_0": {
+        "user_input": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?  La estadística descriptiva solo resume los datos recogidos, mientras que la inferencial saca conclusiones sobre una población más amplia La estadística descriptiva solo utiliza tablas y la inferencial solo utiliza gráficos avanzados La estadística descriptiva es para muestras pequeñas y la inferencial para censos poblacionales completos La inferencial se centra en resumir datos del pasado y la descriptiva en predecir el futuro",
+        "most_similar_question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?La estadística descriptiva solo resume los datos recogidos, mientras que la inferencial saca conclusiones sobre una población más amplia La estadística descriptiva es para muestras pequeñas y la inferencial para censos poblacionales completos La estadística descriptiva solo utiliza tablas y la inferencial solo utiliza gráficos avanzados La inferencial se centra en resumir datos del pasado y la descriptiva en predecir el futuro",
+        "cheating": true
+    },
+    "JoseGarciaNieto-78x_2": {
+        "user_input": "que porcentage de los datos esta contesnido dentro del rango intercuartilico",
+        "most_similar_question": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?",
+        "cheating": true
+    },
+    "JesusMaria-aue_2": {
+        "user_input": "¿Por qué se prefiere el uso de la mediana sobre la media en distribuciones con valores extremadamente altos o bajos?  Porque la mediana es resistente a los valores atípicos, manteniendo su valor central independientemente de los extremos Porque el cálculo de la mediana no requiere ordenar los datos previamente Porque la media aritmética es incapaz de procesar valores decimales Porque la mediana siempre coincide con la moda en distribuciones normales",
+        "most_similar_question": "¿Por qué se prefiere el uso de la mediana sobre la media en distribuciones con valores extremadamente altos o bajos?Porque el cálculo de la mediana no requiere ordenar los datos previamente Porque la mediana siempre coincide con la moda en distribuciones normales Porque la mediana es resistente a los valores atípicos, manteniendo su valor central independientemente de los extremos Porque la media aritmética es incapaz de procesar valores decimales",
+        "cheating": true
+    },
+    "JoseGarciaNieto-k69_4": {
+        "user_input": "ayudame con la pregunta 2",
+        "most_similar_question": "¿Qué porcentaje de los datos se sitúa por debajo del primer cuartil (Q1) en una distribución?",
+        "cheating": true
+    },
+    "JesusMaria-f00_0": {
+        "user_input": "Por qué se prefiere el uso de la mediana sobre la media en distribuciones con valores extremadamente altos o bajos?",
+        "most_similar_question": "¿Por qué se prefiere el uso de la mediana sobre la media en distribuciones con valores extremadamente altos o bajos?",
+        "cheating": true
+    },
+    "JesusMaria-xpe_0": {
+        "user_input": "Dime brevemente y manera concisa como se diferencian la estadistica descriptiva e inferencial",
+        "most_similar_question": "¿Cuál es el objetivo principal de la estadística descriptiva?",
+        "cheating": false
+    },
+    "Laguna-chk_1": {
+        "user_input": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?",
+        "most_similar_question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?",
+        "cheating": true
+    },
+    "JesusMaria-r7e_3": {
+        "user_input": "dime la opcion y ya no me apetece leer este texto",
+        "most_similar_question": "¿Qué nos indica conceptualmente la desviación estándar (o típica)?",
+        "cheating": true
+    },
+    "RamiroMaeztu-31d_2": {
+        "user_input": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?  El 50% central de los datos, situado entre el primer y el tercer cuartil El 100% de los datos excluyendo los valores mínimos El 75% de la distribución total El 25% de los valores más bajos",
+        "most_similar_question": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?El 100% de los datos excluyendo los valores mínimos El 25% de los valores más bajos El 50% central de los datos, situado entre el primer y el tercer cuartil El 75% de la distribución total",
+        "cheating": true
+    },
+    "Laguna-chk_0": {
+        "user_input": "cuales son las diferencias entre la estadistica descriptiva y la inferencial",
+        "most_similar_question": "¿Cuál es el objetivo principal de la estadística descriptiva?",
+        "cheating": false
+    },
+    "JoseGarciaNieto-wob_3": {
+        "user_input": "significa que los valores del rango interquatilico son el 50 por ciento?",
+        "most_similar_question": "Un informe escolar indica que el Rango Intercuartílico (IQR) de las notas de una clase va de 50 a 80 puntos. ¿Qué podemos deducir?",
+        "cheating": false
+    },
+    "Laguna-ioy_1": {
+        "user_input": "Cual es la diferencia entre la varianza y la desviacion estandar",
+        "most_similar_question": "¿Cómo se define la varianza en relación con la desviación típica según el material presentado?",
+        "cheating": false
+    },
+    "Laguna-4kk_2": {
+        "user_input": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica. DIme la respuesta mas corta posible",
+        "most_similar_question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "cheating": true
+    },
+    "Laguna-lqw_0": {
+        "user_input": "para que sirve la estadistica descriptiva",
+        "most_similar_question": "¿Cuál es el objetivo principal de la estadística descriptiva?",
+        "cheating": true
+    },
+    "RamiroMaeztu-2xu_2": {
+        "user_input": "q porcentaje de datos se encuentran dentro del rango intercuartilico",
+        "most_similar_question": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?",
+        "cheating": true
+    },
+    "Laguna-rjb_2": {
+        "user_input": "contestame a la pregunta en un parrafo no muy grande",
+        "most_similar_question": "Creo que puedo hacer un trabajo excelente en la prueba de conocimientos sobre estadística descriptiva.",
+        "cheating": true
+    },
+    "JoseGarciaNieto-yk4_0": {
+        "user_input": "que diferencia hay entre la descriptiva e inferencial",
+        "most_similar_question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?",
+        "cheating": true
+    },
+    "JoseGarciaNieto-78x_3": {
+        "user_input": "resume todo lo de el video para que entineda todo y pueda rellenar un cuestionario",
+        "most_similar_question": "La actividad me ha ayudado mucho a entender el contenido del video.",
+        "cheating": true
+    },
+    "JoseGarciaNieto-wxc_1": {
+        "user_input": "el rango intercuartilico cuantos datosdeja",
+        "most_similar_question": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?",
+        "cheating": true
+    },
+    "RamiroMaeztu-pu9_3": {
+        "user_input": "hazlo de las tablas y las medidas",
+        "most_similar_question": "¿Para qué sirve específicamente una tabla de contingencia (Cross Tab)?",
+        "cheating": false
+    },
+    "RamiroMaeztu-hrb_0": {
+        "user_input": "cual es la distinción fundamental que hace el video entre la estadística descriptiva y la interferencial?",
+        "most_similar_question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?",
+        "cheating": true
+    },
+    "RamiroMaeztu-8jb_5": {
+        "user_input": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "most_similar_question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "cheating": true
+    },
+    "JesusMaria-f6g_3": {
+        "user_input": "Es el rango intercuartílico el 50%?",
+        "most_similar_question": "Un informe escolar indica que el Rango Intercuartílico (IQR) de las notas de una clase va de 50 a 80 puntos. ¿Qué podemos deducir?",
+        "cheating": false
+    },
+    "JoseGarciaNieto-rwf_0": {
+        "user_input": "que porcentaje de los datos se encuentra contenido dentor del rango intercuartilico?",
+        "most_similar_question": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?",
+        "cheating": true
+    },
+    "JesusMaria-4e6_0": {
+        "user_input": "Cuál es la diferencia entre la estadística descriptiva y la inferencial",
+        "most_similar_question": "¿Cuál es el objetivo principal de la estadística descriptiva?",
+        "cheating": false
+    },
+    "Laguna-4kk_0": {
+        "user_input": "socio dame las respuestas del video en orden",
+        "most_similar_question": "El contenido del video presentaba una dificultad elevada.",
+        "cheating": true
+    },
+    "RamiroMaeztu-31d_3": {
+        "user_input": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?  El 50% central de los datos, situado entre el primer y el tercer cuartil El 100% de los datos excluyendo los valores mínimos El 75% de la distribución total El 25% de los valores más bajos",
+        "most_similar_question": "¿Qué porcentaje de los datos se encuentra contenido dentro del rango intercuartílico?El 100% de los datos excluyendo los valores mínimos El 25% de los valores más bajos El 50% central de los datos, situado entre el primer y el tercer cuartil El 75% de la distribución total",
+        "cheating": true
+    },
+    "RamiroMaeztu-qf2_4": {
+        "user_input": "porque la varianza junto a desviación tipica mejora el entendimiento de la dispersión en investigaión clinica?",
+        "most_similar_question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "cheating": true
+    },
+    "RamiroMaeztu-pu9_7": {
+        "user_input": "Evalúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+        "most_similar_question": "Evalúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+        "cheating": true
+    },
+    "RamiroMaeztu-qf6_2": {
+        "user_input": "diferencias de las 2 ecuaciones de la desviacion estandar",
+        "most_similar_question": "¿Qué nos indica conceptualmente la desviación estándar (o típica)?",
+        "cheating": false
+    },
+    "JoseGarciaNieto-uy6_4": {
+        "user_input": "con una de estas respuestas: La inferencial se centra en resumir datos del pasado y la descriptiva en predecir el futuro La estadística descriptiva solo utiliza tablas y la inferencial solo utiliza gráficos avanzados La estadística descriptiva solo resume los datos recogidos, mientras que la inferencial saca conclusiones sobre una población más amplia La estadística descriptiva es para muestras pequeñas y la inferencial para censos poblacionales completos",
+        "most_similar_question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?La estadística descriptiva solo resume los datos recogidos, mientras que la inferencial saca conclusiones sobre una población más amplia La estadística descriptiva es para muestras pequeñas y la inferencial para censos poblacionales completos La estadística descriptiva solo utiliza tablas y la inferencial solo utiliza gráficos avanzados La inferencial se centra en resumir datos del pasado y la descriptiva en predecir el futuro",
+        "cheating": true
+    },
+    "Laguna-38s_0": {
+        "user_input": "cual es la distincion fundamental que hace el video entre la estadistica descriptiva y la inferencial",
+        "most_similar_question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?",
+        "cheating": true
+    },
+    "Laguna-o61_1": {
+        "user_input": "dime todas las respuestas",
+        "most_similar_question": "El contenido del video presentaba una dificultad elevada.",
+        "cheating": true
+    },
+    "JesusMaria-r7e_7": {
+        "user_input": "y la segunda opcion cual es",
+        "most_similar_question": "¿Cuál es el objetivo principal de la estadística descriptiva?",
+        "cheating": true
+    },
+    "RamiroMaeztu-31d_1": {
+        "user_input": "Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?  La estadística descriptiva solo utiliza tablas y la inferencial solo utiliza gráficos avanzados La estadística descriptiva es para muestras pequeñas y la inferencial para censos poblacionales completos La inferencial se centra en resumir datos del pasado y la descriptiva en predecir el futuro La estadística descriptiva solo resume los datos recogidos, mientras que la inferencial saca conclusiones sobre una población más amplia",
+        "most_similar_question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?La estadística descriptiva solo resume los datos recogidos, mientras que la inferencial saca conclusiones sobre una población más amplia La estadística descriptiva es para muestras pequeñas y la inferencial para censos poblacionales completos La estadística descriptiva solo utiliza tablas y la inferencial solo utiliza gráficos avanzados La inferencial se centra en resumir datos del pasado y la descriptiva en predecir el futuro",
+        "cheating": true
+    },
+    "Laguna-rjb_3": {
+        "user_input": "Evalúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+        "most_similar_question": "Evalúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+        "cheating": true
+    },
+    "RamiroMaeztu-8jb_6": {
+        "user_input": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica..Reformula esta cuestion",
+        "most_similar_question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "cheating": true
+    },
+    "Laguna-4kk_1": {
+        "user_input": "me refiero a las preguntas del video",
+        "most_similar_question": "El contenido del video presentaba una dificultad elevada.",
+        "cheating": true
+    },
+    "Laguna-rjb_1": {
+        "user_input": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "most_similar_question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "cheating": true
+    },
+    "RamiroMaeztu-4bc_11": {
+        "user_input": "Evalúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+        "most_similar_question": "Evalúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+        "cheating": true
+    },
+    "JoseGarciaNieto-uy6_3": {
+        "user_input": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?",
+        "most_similar_question": "¿Cuál es la distinción fundamental que hace el vídeo entre la estadística descriptiva y la inferencial?",
+        "cheating": true
+    },
+    "RamiroMaeztu-31d_4": {
+        "user_input": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "most_similar_question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "cheating": true
+    },
+    "RamiroMaeztu-8jb_4": {
+        "user_input": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "most_similar_question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "cheating": true
+    },
+    "RamiroMaeztu-qf2_3": {
+        "user_input": "reformula esta question: Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "most_similar_question": "Analice cómo la inclusión de la varianza junto a la desviación típica profundiza el entendimiento de la dispersión de una muestra en un entorno de investigación clínica.",
+        "cheating": false
+    },
+    "JesusMaria-yi0_2": {
+        "user_input": "Dime las direncias de todos los trkini que s han vsito",
+        "most_similar_question": "Si realizamos una encuesta a 24 alumnos del colegio sobre cuál es la forma de transporte a través de la cual vienen al colegio, y se obtienen los siguientes resultados: 5 personas en bicicleta, 12 en coche, 5 a pie y 2 en autobús. ¿Cuál es la moda?",
+        "cheating": false
+    },
+    "RamiroMaeztu-8jb_2": {
+        "user_input": "valúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+        "most_similar_question": "Evalúe la utilidad de las tablas de contingencia (Crosstabs) para identificar patrones de comportamiento cuando se cruzan variables geográficas con preferencias de consumo o transporte.",
+        "cheating": true
+    },
+    "JoseGarciaNieto-yk4_1": {
+        "user_input": "Por qué se prefiere el uso de la mediana sobre la media en distribuciones con valores extremadamente altos o bajos?",
+        "most_similar_question": "¿Por qué se prefiere el uso de la mediana sobre la media en distribuciones con valores extremadamente altos o bajos?",
+        "cheating": true
+    }
+}

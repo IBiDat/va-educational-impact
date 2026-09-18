@@ -4,8 +4,9 @@ import polars as pl
 def load_raw_data(
     raw_data_path: str,
     interactions_processed_data_path: str,
-    interaction_type_data_path: str
-) -> tuple[dict[str, dict], pl.DataFrame, pl.DataFrame]:
+    interaction_type_data_path: str,
+    cheating_interaction_path: str
+) -> tuple[dict[str, dict], pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     with open(raw_data_path, "r", encoding="utf-8") as f:
         raw_data = json.load(f)
     
@@ -13,7 +14,9 @@ def load_raw_data(
     
     interactions_type_data = pl.read_parquet(interaction_type_data_path)
     
-    return raw_data, interactions_processed_data, interactions_type_data
+    cheating_interaction_data = pl.read_parquet(cheating_interaction_path)
+    
+    return raw_data, interactions_processed_data, interactions_type_data, cheating_interaction_data
 
 def filter_users_for_validation_sample(
     raw_data: dict[str, dict],
@@ -64,3 +67,19 @@ def filter_interactions_type_for_validation(
     )
     
     return filtered_interactions_type
+
+
+def filter_cheating_interactions_for_validation(
+    cheating_interaction_data: pl.DataFrame,
+    sample_size: int
+) -> pl.DataFrame:
+    #Filter conversations with cheating_score_llm equal to 1
+    filtered_cheating_interactions = cheating_interaction_data.filter(
+        pl.col("cheating_score_llm") == 1
+    ).sample(
+        sample_size,
+        shuffle=True,
+        seed=33
+    )
+    
+    return filtered_cheating_interactions
