@@ -21,6 +21,7 @@ from src.config.config_forms import (
     PERIODOS,
     MAX_PUNTUACION_TC,
     MAX_PUNTUACION_TA,
+    MAX_PUNTUACION_TCC,
     TC_RESPUESTAS_CORRECTAS,
     MAX_PUNTUACION_TC_TIPO
 )
@@ -79,7 +80,7 @@ def get_cols_tcc_rel(df):
 def get_exprs_tcc_rel(cols_tcc):
 
     return [
-        pl.col(c) / MAX_PUNTUACION_TC
+        pl.col(c) / MAX_PUNTUACION_TCC 
         for c in cols_tcc
     ]
 
@@ -92,7 +93,7 @@ def get_cols_tcc_int(df):
 def get_exprs_tcc_int(cols_tcc):
 
     return [
-        pl.col(c) / MAX_PUNTUACION_TC
+        pl.col(c) / MAX_PUNTUACION_TCC 
         for c in cols_tcc
     ]
 
@@ -106,7 +107,7 @@ def get_cols_tcc_ext(df):
 def get_exprs_tcc_ext(cols_tcc):
 
     return [
-        pl.col(c) / MAX_PUNTUACION_TC
+        pl.col(c) / MAX_PUNTUACION_TCC 
         for c in cols_tcc
     ]
 
