@@ -18,9 +18,11 @@ raw_data_filename = 'interactions_raw_data.json'
 raw_data_path = os.path.join(project_path, 'data', 'interactions', 'raw_data', raw_data_filename)
 interactions_processed_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'interactions_processed_data.parquet')
 interaction_type_data_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'interactions_type', 'interaction_type.parquet')
+cheating_interaction_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'cheating_score', 'interaction_cheating_score.parquet')
+
 output_path = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'validation_samples', 'semantic_depth_data_validated.json')
 output_path_interaction_type = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'validation_samples', 'interaction_type_data_validated.json')
-
+output_path_cheating_interactions = os.path.join(project_path, 'data', 'interactions', 'processed_data', 'validation_samples', 'cheating_interactions_validated.json')
 ###########################################################################################
 
 # --- LOCAL IMPORTS ---
@@ -28,16 +30,18 @@ output_path_interaction_type = os.path.join(project_path, 'data', 'interactions'
 from src.utils.interactions.validate.validation_sample_generation import (
     load_raw_data,
     filter_users_for_validation_sample,
-    filter_interactions_type_for_validation
+    filter_interactions_type_for_validation,
+    filter_cheating_interactions_for_validation
 )
 # --- MAIN EXECUTION ---
 
 def main():
     #1. Load Necessary Data
-    raw_data, interactions_processed_data, interactions_type_data = load_raw_data(
+    raw_data, interactions_processed_data, interactions_type_data, cheating_interaction_data = load_raw_data(
         raw_data_path,
         interactions_processed_data_path,
-        interaction_type_data_path
+        interaction_type_data_path, 
+        cheating_interaction_path
     )
     
     #2. Filter users for WSDI
@@ -53,7 +57,13 @@ def main():
         sample_size=50
     )
     
-    #4. Include null semantic_depth_level for evaluation
+    #4. Filter interactions for interactions_type validation
+    filtered_cheating_interactions = filter_cheating_interactions_for_validation(
+        cheating_interaction_data,
+        sample_size=50
+    )
+    
+    #5. Include null semantic_depth_level for evaluation
     sampled_users = {}
     for user_id, chat_interactions in filtered_raw_data.items():
         new_chat_interactions = []
@@ -63,7 +73,7 @@ def main():
         
         sampled_users[user_id] = new_chat_interactions
     
-    #5. Repeat the process for filtered_interactions_type
+    #6. Repeat the process for filtered_interactions_type
     interaction_type_sample = {}
     for row in filtered_interactions_type.iter_rows(named=True):
         interaction_type_sample[row["conversation_id"]] = {
@@ -71,7 +81,16 @@ def main():
             "interaction_type": None
         }
     
-    #6. Save the validation sample
+    #7. Repeat the process for filtered_interactions_type
+    cheating_sample = {}
+    for row in filtered_cheating_interactions.iter_rows(named=True):
+        cheating_sample[row["conversation_id"]] = {
+            "user_input": row["user_input"],
+            "most_similar_question": row["most_similar_question"],
+            "cheating": None
+        }
+    
+    #8. Save the validation sample
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     if os.path.exists(output_path):
@@ -85,6 +104,12 @@ def main():
     else:
         with open(output_path_interaction_type, "w", encoding="utf-8") as f:
             json.dump(interaction_type_sample, f, ensure_ascii=False, indent=4)
+    
+    if os.path.exists(output_path_cheating_interactions):
+        print(f"Cheating interactions validation file already exists. Check the path or remove the existing file before running the script.")
+    else:
+        with open(output_path_cheating_interactions, "w", encoding="utf-8") as f:
+            json.dump(cheating_sample, f, ensure_ascii=False, indent=4)
     
 ###########################################################################################
 
