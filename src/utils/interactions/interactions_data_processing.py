@@ -152,8 +152,12 @@ def process_interactions_data(raw_data):
             
             #Multiply score by full_first_last_time_interval
             gini_chat_interaction_distribution = score * full_first_last_time_interval * len(chat_ts)       
-        else: 
-            mean_diff, median_diff, mean_weighted_diff, gini_chat_interaction_distribution = None, None, None, None
+        else:
+            mean_diff, median_diff, mean_weighted_diff = None, None, None
+            # Con una sola consulta no hay distribución temporal que medir:
+            # mismo tratamiento que el caso de < 3 marcas en el Gini (score 0).
+            # Los no usuarios (chat_ts vacío) siguen como None.
+            gini_chat_interaction_distribution = 0.0 if chat_ts else None
             
         return chat_first_timestamp, chat_last_timestamp, first_ts, last_ts, chat_first_last_time_interval, full_first_last_time_interval, mean_diff, median_diff, mean_weighted_diff, gini_chat_interaction_distribution
 
